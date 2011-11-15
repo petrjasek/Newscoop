@@ -89,7 +89,6 @@ class EmailService
             return;
         }
 
-        $this->view->placeholder(self::PLACEHOLDER_SUBJECT)->set('New Comment');
         $message = $this->view->action('comment-notify', 'email', 'default', array(
             'comment' => $comment,
             'article' => $article,
