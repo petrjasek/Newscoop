@@ -433,7 +433,12 @@ class NewsImport
                 }
             }
 
-            $art_name = $one_event['headline'] . ' - ' . $one_event['date'] . ' (' . $one_event['event_id'] . ')';
+            // no date part for movie screenings (all together), and may be the same way for events too lately
+            $art_name_date_part = '';
+            if ($scr_type != $art_type) {
+                $art_name_date_part = ' - ' . $one_event['date'];
+            }
+            $art_name = $one_event['headline'] . $art_name_date_part . ' (' . $one_event['event_id'] . ')';
 
             if (!$article) {
                 $article = new Article($art_lang);
