@@ -1340,7 +1340,7 @@ class KinoData_Parser_SimpleXML {
 
             $one_event = array();
 
-            //$one_event['date'] = $set_date;
+            $one_event['date'] = $set_date; // for the older (and probably safer) way of dealing with old data
             //$one_date_max = '0000-00-01';
             $one_date_max = $set_date;
 
@@ -1360,7 +1360,7 @@ class KinoData_Parser_SimpleXML {
             }
             ksort($set_date_times);
 
-            $one_event['date'] = $one_date_max;
+            //$one_event['date'] = $one_date_max; // for the newer (but not used) way of dealing with old data
             $one_event['date_time_tree'] = json_encode($set_date_times);
             $one_event['date_time_text'] = $this->formatDateText($set_date_times);
 
