@@ -729,17 +729,17 @@ class KinoData_Parser_SimpleXML {
 
 
         // movies genres info
-        foreach($movies_genres_files as $one_mov_file) {
-            //$one_mov_xml = simplexml_load_file($one_mov_file);
-            $one_mov_xml = simplexml_load_string(FileLoad::LoadFix($one_mov_file));
-            foreach ($one_mov_xml->genre as $one_genre) {
+        foreach($movies_genres_files as $one_gen_file) {
+            //$one_gen_xml = simplexml_load_file($one_gen_file);
+            $one_gen_xml = simplexml_load_string(FileLoad::LoadFix($one_gen_file));
+            foreach ($one_gen_xml->genre as $one_genre) {
                 $one_gen_id = trim('' . $one_genre->genid);
                 if (empty($one_gen_id)) {
                     continue;
                 }
                 $one_gen_info = array();
                 if (isset($movies_genres[$one_gen_id])) {
-                    $one_gen_info = $movies_infos[$one_gen_id];
+                    $one_gen_info = $movies_genres[$one_gen_id];
                 }
 
                 $one_gen_de = trim('' . $one_genre->gennad);
@@ -754,7 +754,7 @@ class KinoData_Parser_SimpleXML {
                 $movies_genres[$one_gen_id] = $one_gen_info;
             }
 
-            foreach ($one_mov_xml->movie as $one_movie) {
+            foreach ($one_gen_xml->movie as $one_movie) {
                 $one_mov_key = trim('' . $one_movie->movkey);
                 if (empty($one_mov_key)) {
                     continue;
