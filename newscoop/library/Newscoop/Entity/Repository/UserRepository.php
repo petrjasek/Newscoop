@@ -206,8 +206,8 @@ class UserRepository extends EntityRepository
         $qb->andWhere($qb->expr()->eq("u.is_public", true));
 
         $letterIndex = $qb->expr()->orx();
-        for ($i=0; $i < count($letters); $i++) {
-            $letterIndex->add($qb->expr()->like("LOWER(u.username)", "'$letters[$i]%'"));
+        foreach ($letters as $letter) {
+            $letterIndex->add($qb->expr()->like("LOWER(u.username)", "'$letter%'"));
         }
         $qb->andWhere($letterIndex);
 
@@ -408,6 +408,72 @@ class UserRepository extends EntityRepository
         }
 
         $this->getEntityManager()->flush();
+    }
+
+    /**
+     * Find by first character of username
+     *
+     * @param array $characters
+     * @param int $limit
+     * @param int $offset
+     * @return array
+     */
+    public function findByUsernameFirstCharacterIn(array $characters, $limit = 25, $offset = 0)
+    {
+        if (empty($characters)) {
+            throw new \InvalidArgumentException("Characters can't be empty");
+        }
+
+        $query = $this->createQueryBuilder('u')
+            ->where($this->getUsernameFirstCharacterWhere($characters))
+            ->orderBy('u.username', 'ASC')
+            ->setMaxResults($limit)
+            ->setFirstResult($offset)
+            ->getQuery();
+
+        return $query->getResult();
+    }
+
+    /**
+     * Count by first character of username
+     *
+     * @param array $characters
+     * @return int
+     */
+    public function countByUsernameFirstCharacterIn(array $characters)
+    {
+        if (empty($characters)) {
+            throw new \InvalidArgumentException("Characters can't be empty");
+        }
+
+        $query = $this->getEntityManager()->createQueryBuilder()
+            ->select('COUNT(u)')
+            ->from($this->getEntityName(), 'u')
+            ->where($this->getUsernameFirstCharacterWhere($characters))
+            ->getQuery();
+
+        return $query->getSingleScalarResult();
+    }
+
+    /**
+     * Get first characters constraint
+     *
+     * @param array $characters
+     * @return Doctrine\ORM\Query\Expr\Orx
+     */
+    private function getUsernameFirstCharacterWhere(array $characters)
+    {
+        $expr = $this->getEntityManager()->getExpressionBuilder();
+        $characterWhere = $expr->orx();
+        foreach ($characters as $i => $character) {
+            $characterWhere->add($expr->like('LOWER(u.username)', $expr->literal($character . '%')));
+        }
+
+        $where = $expr->andX();
+        $where->add($expr->eq('u.status', User::STATUS_ACTIVE));
+        $where->add($expr->eq('u.is_public', true));
+        $where->add($characterWhere);
+        return $where;
     }
 
     /**

@@ -19,9 +19,11 @@ class ListUserServiceTest extends \RepositoryTestCase
     public function setUp()
     {
         parent::setUp('Newscoop\Entity\User', 'Newscoop\Entity\UserAttribute', 'Newscoop\Entity\Acl\Role', 'Newscoop\Entity\User\Group', 'Newscoop\Entity\Author');
-        $this->service = new ListUserService(array('blog' => array(
-            'role' => 1,
-        )), $this->em);
+        $this->service = new ListUserService(array(
+            'blog' => array(
+                'role' => 1,
+            ),
+        ), $this->em);
     }
 
     public function testUser()
@@ -125,6 +127,103 @@ class ListUserServiceTest extends \RepositoryTestCase
         $this->assertEquals(1, count($editors));
         $this->assertEquals($editor->getId(), $editors[0]->getId());
         $this->assertEquals(1, $service->getEditorsCount());
+    }
+
+    public function testFindByUsernameStartsWith()
+    {
+        $em = $this->getMockBuilder('Doctrine\ORM\EntityManager')
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $repository = $this->getMockBuilder('Newscoop\Entity\Repository\UserRepository')
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $em->expects($this->once())
+            ->method('getRepository')
+            ->with($this->equalTo('Newscoop\Entity\User'))
+            ->will($this->returnValue($repository));
+
+        $value = 'testval';
+        $repository->expects($this->any())
+            ->method('findByUsernameFirstCharacterIn')
+            ->with($this->equalTo(array('b')), $this->equalTo(1), $this->equalTo(2))
+            ->will($this->returnValue($value));
+
+        $service = new ListUserService($GLOBALS['application']->getOptions(), $em);
+        $this->assertEquals($value, $service->findByUsernameFirstCharacter('b', 1, 2));
+        $this->assertEquals($value, $service->findByUsernameFirstCharacter('B', 1, 2));
+    }
+
+    public function testCountByUsernameFirstCharacter()
+    {
+        $em = $this->getMockBuilder('Doctrine\ORM\EntityManager')
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $repository = $this->getMockBuilder('Newscoop\Entity\Repository\UserRepository')
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $em->expects($this->once())
+            ->method('getRepository')
+            ->will($this->returnValue($repository));
+
+        $repository->expects($this->once())
+            ->method('countByUsernameFirstCharacterIn')
+            ->will($this->returnValue(1));
+
+        $service = new ListUserService($GLOBALS['application']->getOptions(), $em);
+        $this->assertEquals(1, $service->countByUsernameFirstCharacter('b'));
+    }
+
+    public function testFindByUsernameStartsWithCharacterGroups()
+    {
+        $groups = array(
+            'a' => array('a', 'ä', 'à', 'â', 'æ'),
+            'c' => array('c', 'ç'),
+            'e' => array('e', 'è', 'é', 'ê', 'ë'),
+            'i' => array('i', 'î', 'ï', 'ì', 'í'),
+            'o' => array('o', 'ö', 'ô', 'œ', 'ò', 'ó'),
+            's' => array('s', 'ß'),
+            'u' => array('u', 'ü', 'ù', 'û', 'ú'),
+            'y' => array('y', 'ÿ'),
+        );
+
+        foreach (range('a', 'z') as $character) {
+            $em = $this->getMockBuilder('Doctrine\ORM\EntityManager')
+                ->disableOriginalConstructor()
+                ->getMock();
+
+            $repository = $this->getMockBuilder('Newscoop\Entity\Repository\UserRepository')
+                ->disableOriginalConstructor()
+                ->getMock();
+
+            $em->expects($this->once())
+                ->method('getRepository')
+                ->will($this->returnValue($repository));
+
+            $param = isset($groups[$character]) ?
+                $groups[$character] : array($character);
+
+            $repository->expects($this->any())
+                ->method('findByUsernameFirstCharacterIn')
+                ->with($this->equalTo($param), $this->anything(), $this->anything());
+
+            $service = new ListUserService($GLOBALS['application']->getOptions(), $em);
+            $service->findByUsernameFirstCharacter($character);
+        }
+    }
+
+    public function testDbHandlingLower()
+    {
+        $connection = $this->em->getConnection();
+        if ($connection->getDriver()->getDatabasePlatform()->getName() == 'sqlite') {
+            $this->markTestSkipped('Not working with sqlite db');
+            return;
+        }
+
+        $this->assertEquals('ä', $connection->fetchColumn("SELECT LOWER('Ä')"));
     }
 
     private function addUser($name, $status = 1, $isPublic = 1)

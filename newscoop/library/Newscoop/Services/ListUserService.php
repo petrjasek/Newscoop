@@ -21,6 +21,9 @@ class ListUserService
     /** @var array */
     private $config = array();
 
+    /** @var Newscoop\Entity\Repository\UserRepository */
+    protected $repository;
+
     /**
      * @param array $config
      * @param Doctrine\ORM\EntityManager $em
@@ -29,6 +32,7 @@ class ListUserService
     {
         $this->config = $config;
         $this->em = $em;
+        $this->repository = $this->em->getRepository('Newscoop\Entity\User');
     }
 
     /**
@@ -42,8 +46,7 @@ class ListUserService
      */
     public function findBy(array $criteria, array $orderBy = array(), $limit = NULL, $offset = NULL)
     {
-        return $this->getRepository()
-            ->findBy($criteria, $orderBy, $limit, $offset);
+        return $this->repository->findBy($criteria, $orderBy, $limit, $offset);
     }
 
     /**
@@ -54,7 +57,7 @@ class ListUserService
      */
     public function countBy(array $criteria = array())
     {
-        return $this->getRepository()->countBy($criteria);
+        return $this->repository->countBy($criteria);
     }
 
     /**
@@ -65,7 +68,7 @@ class ListUserService
      */
     public function findOneBy(array $criteria)
     {
-        return $this->getRepository()->findOneBy($criteria);
+        return $this->repository->findOneBy($criteria);
     }
 
     /**
@@ -77,7 +80,7 @@ class ListUserService
     {
         $offset = ($page-1) * $limit;
 
-        $result = $this->getRepository()->findActiveUsers($countOnly, $offset, $limit);
+        $result = $this->repository->findActiveUsers($countOnly, $offset, $limit);
 
         if($countOnly) {
             return $result[1];
@@ -94,7 +97,7 @@ class ListUserService
      */
     public function getRandomList($limit = 25)
     {
-        return $this->getRepository()->getRandomList($limit);
+        return $this->repository->getRandomList($limit);
     }
 
     /**
@@ -106,7 +109,7 @@ class ListUserService
     {
         $offset = ($page-1) * $limit;
 
-        $result = $this->getRepository()->findUsersLastNameInRange($letters, $countOnly, $offset, $limit);
+        $result = $this->repository->findUsersLastNameInRange($letters, $countOnly, $offset, $limit);
 
         if($countOnly) {
             return $result[1];
@@ -124,7 +127,7 @@ class ListUserService
     {
         $offset = ($page-1) * $limit;
 
-        $result = $this->getRepository()->searchUsers($search, $countOnly, $offset, $limit);
+        $result = $this->repository->searchUsers($search, $countOnly, $offset, $limit);
 
         if($countOnly) {
             return $result[1];
@@ -142,7 +145,7 @@ class ListUserService
      */
     public function findEditors($limit = NULL, $offset = NULL)
     {
-        return $this->getRepository()->findEditors($this->config['blog']['role'], $limit, $offset);
+        return $this->repository->findEditors($this->config['blog']['role'], $limit, $offset);
     }
 
     /**
@@ -152,16 +155,43 @@ class ListUserService
      */
     public function getEditorsCount()
     {
-        return $this->getRepository()->getEditorsCount($this->config['blog']['role']);
+        return $this->repository->getEditorsCount($this->config['blog']['role']);
     }
 
     /**
-     * Get repository
+     * Find users by first character of username
      *
-     * @return Newscoop\Entity\Repository\UserRepository
+     * @param string $character
+     * @param int $limit
+     * @param int $offset
+     * @return array
      */
-    protected function getRepository()
+    public function findByUsernameFirstCharacter($character, $limit = 25, $offset = 0)
     {
-        return $this->em->getRepository('Newscoop\Entity\User');
+        return $this->repository->findByUsernameFirstCharacterIn($this->getCharacters($character), $limit, $offset);
+    }
+
+    /**
+     * Count users by first character of username
+     *
+     * @param string $character
+     * @return int
+     */
+    public function countByUsernameFirstCharacter($character)
+    {
+        return $this->repository->countByUsernameFirstCharacterIn($this->getCharacters($character));
+    }
+
+    /**
+     * Get characters for given character group
+     *
+     * @param string $character
+     * @return array
+     */
+    private function getCharacters($character)
+    {
+        $character = strtolower($character);
+        return isset($this->config['characterGroup'][$character]) ?
+            explode(' ', $this->config['characterGroup'][$character]) : array($character);
     }
 }
