@@ -6,7 +6,7 @@ ALTER TABLE `Log` DROP KEY `IdEvent`;
 ALTER TABLE `Log` ADD KEY `priority` (`priority`);
 
 -- Audit event table
-ALTER TABLE `audit_event` MODIFY `resource_id` VARCHAR(1024);
+ALTER TABLE `audit_event` MODIFY `resource_id` VARCHAR(255);
 
 -- Add Acl Role table
 CREATE TABLE IF NOT EXISTS `acl_role` (
