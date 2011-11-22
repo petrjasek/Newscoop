@@ -433,7 +433,12 @@ class NewsImport
                 }
             }
 
-            $art_name = $one_event['headline'] . ' - ' . $one_event['date'] . ' (' . $one_event['event_id'] . ')';
+            // no date part for movie screenings (all together), and may be the same way for events too lately
+            $art_name_date_part = '';
+            if ($scr_type != $art_type) {
+                $art_name_date_part = ' - ' . $one_event['date'];
+            }
+            $art_name = $one_event['headline'] . $art_name_date_part . ' (' . $one_event['event_id'] . ')';
 
             if (!$article) {
                 $article = new Article($art_lang);
@@ -808,7 +813,8 @@ class NewsImport
             //new ComparisonOperation('NrIssue', new Operator('is', 'sql'), $art_issue),
             new ComparisonOperation('NrSection', new Operator('is', 'sql'), $art_section),
             new ComparisonOperation('Type', new Operator('is', 'sql'), $art_type),
-            new ComparisonOperation('' . $art_type . '.date', new Operator('smaller_equal', 'sql'), $passed_date),
+            //new ComparisonOperation('' . $art_type . '.date', new Operator('smaller_equal', 'sql'), $passed_date), // for newer (but not used) way
+            new ComparisonOperation('' . $art_type . '.date', new Operator('smaller', 'sql'), $passed_date), // for older (but probably safer) way
             new ComparisonOperation('' . $art_type . '.provider_id', new Operator('is', 'sql'), $art_provider),
         ), null, null, 0, $p_count, true);
 
@@ -827,7 +833,8 @@ class NewsImport
 
             $event_data_rem = $event_art_rem->getArticleData();
             try {
-                if (($event_data_rem->getFieldValue('date')) > $passed_date) {
+                //if (($event_data_rem->getFieldValue('date')) > $passed_date) { // for newer (but not used) way
+                if (($event_data_rem->getFieldValue('date')) >= $passed_date) { // for older (but probably safer) way
                     continue;
                 }
             }

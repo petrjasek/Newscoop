@@ -195,30 +195,9 @@ class Admin_FeedbackController extends Zend_Controller_Action
             $feedbacks = array($feedbacks);
         }
 
-        if ($status == 'deleted') {
-            //$messages = array_unique(array_merge($messages, $this->getAllReplies($messages)));
-        }
-
         try {
             foreach ($feedbacks as $id) {
                 $feedback = $this->feedbackRepository->find($id);
-
-                if ($status == 'deleted') {
-                    /*
-                    $msg = getGS('Comment delete by $1 from the article $2 ($3)', Zend_Registry::get('user')->getName(),
-                                 $comment->getThread()->getName(), $comment->getLanguage()->getCode());
-
-                    $this->_helper->log($msg);
-                    $this->_helper->flashMessenger($msg);
-                    */
-                } else {
-                    /*
-                    $msg = getGS('Message $4 by $1 in the article $2 ($3)', Zend_Registry::get('user')->getName(),
-                                 $comment->getThread()->getName(), $comment->getLanguage()->getCode(), $status);
-                    $this->_helper->log($msg);
-                    $this->_helper->flashMessenger($msg);
-                    */
-                }
             }
             $this->feedbackRepository->setStatus($feedbacks, $status);
             $this->feedbackRepository->flush();
@@ -259,7 +238,7 @@ class Admin_FeedbackController extends Zend_Controller_Action
 		);
 		$mailTransport = new Zend_Mail_Transport_Smtp('smtp.gmail.com',$configMail);
 		*/
-		$mail = new Zend_Mail();
+		$mail = new Zend_Mail('utf-8');
 		$mail->setSubject($subject);
 		$mail->setBodyText($message);
 		$mail->setFrom($fromEmail);

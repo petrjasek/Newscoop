@@ -123,12 +123,16 @@ if ($articleObj->isLocked() && ($g_user->getUserId() != $articleObj->getLockedBy
             $author_type = $f_article_author_type[$i];
             $authorObj->setType($author_type);
             // Links the author to the article
-            $articleAuthorObj = new ArticleAuthor($articleObj->getArticleNumber(),
+            if ($authorObj->getId() != 0) {
+                $articleAuthorObj = new ArticleAuthor($articleObj->getArticleNumber(),
                                                   $articleObj->getLanguageId(),
-                                                  $authorObj->getId(), $author_type);
-            if (!$articleAuthorObj->exists()) {
+                                                  $authorObj->getId(), $author_type, $i + 1);
+            }
+
+            if (isset($articleAuthorObj) && !$articleAuthorObj->exists()) {
                 $articleAuthorObj->create();
             }
+
             $i++;
         }
     }

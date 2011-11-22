@@ -8,7 +8,14 @@
  * @link http://www.sourcefabric.org
  */
 
-register_shutdown_function('ns_cli_shutdown');
+if (empty($options)) {
+    register_shutdown_function('ns_cli_shutdown');
+}
+else {
+    if (!in_array('--keep-session', $options, true)) {
+        register_shutdown_function('ns_cli_shutdown');
+    }
+}
 
 if (!defined('APPLICATION_PATH')) {
     require_once __DIR__ . '/../application.php';
