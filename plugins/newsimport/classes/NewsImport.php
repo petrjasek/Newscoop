@@ -473,6 +473,28 @@ class NewsImport
                 $f_movie_trailer = (isset($one_event['movie_trailer']) && (!empty($one_event['movie_trailer']))) ? $one_event['movie_trailer'] : '';
                 $article_data->setProperty('Fmovie_trailer', $f_movie_trailer);
 
+                $f_movie_trailer = (isset($one_event['movie_trailer_vimeo']) && (!empty($one_event['movie_trailer_vimeo']))) ? $one_event['movie_trailer_vimeo'] : '';
+                $article_data->setProperty('Fmovie_trailer_vimeo', $f_movie_trailer_vimeo);
+
+                $f_movie_trailer_width = 0;
+                $f_movie_trailer_height = 0;
+                $f_movie_trailer_codec = '';
+                if (isset($one_event['movie_trailer_info']) && (!empty($one_event['movie_trailer_info']))) {
+                    $one_trailer_info = $one_event['movie_trailer_info'];
+                    if (isset($one_trailer_info['width']) && (!empty($one_trailer_info['width']))) {
+                        $f_movie_trailer_width = 0 + $one_trailer_info['width'];
+                    }
+                    if (isset($one_trailer_info['height']) && (!empty($one_trailer_info['height']))) {
+                        $f_movie_trailer_height = 0 + $one_trailer_info['height'];
+                    }
+                    if (isset($one_trailer_info['codec']) && (!empty($one_trailer_info['codec']))) {
+                        $f_movie_trailer_codec = $one_trailer_info['codec'];
+                    }
+                }
+                $article_data->setProperty('Fmovie_trailer_width', $f_movie_trailer_width);
+                $article_data->setProperty('Fmovie_trailer_height', $f_movie_trailer_height);
+                $article_data->setProperty('Fmovie_trailer_codec', $f_movie_trailer_codec);
+
                 $f_movie_info = (isset($one_event['movie_info']) && (!empty($one_event['movie_info']))) ? $one_event['movie_info'] : '';
                 if (empty($f_movie_info)) {
                     $f_movie_info = array();
@@ -809,9 +831,9 @@ class NewsImport
         $p_count = 0;
         $event_art_list = Article::GetList(array(
             new ComparisonOperation('idlanguage', new Operator('is', 'sql'), $art_lang),
-            new ComparisonOperation('IdPublication', new Operator('is', 'sql'), $art_publication),
+            //new ComparisonOperation('IdPublication', new Operator('is', 'sql'), $art_publication),
             //new ComparisonOperation('NrIssue', new Operator('is', 'sql'), $art_issue),
-            new ComparisonOperation('NrSection', new Operator('is', 'sql'), $art_section),
+            //new ComparisonOperation('NrSection', new Operator('is', 'sql'), $art_section),
             new ComparisonOperation('Type', new Operator('is', 'sql'), $art_type),
             //new ComparisonOperation('' . $art_type . '.date', new Operator('smaller_equal', 'sql'), $passed_date), // for newer (but not used) way
             new ComparisonOperation('' . $art_type . '.date', new Operator('smaller', 'sql'), $passed_date), // for older (but probably safer) way
