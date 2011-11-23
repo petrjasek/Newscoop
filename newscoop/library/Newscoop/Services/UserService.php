@@ -282,16 +282,31 @@ class UserService implements ObjectRepository
     }
 
     /**
-     * Get count of public users
+     * Count public users
      *
      * @return int
      */
-    public function getPublicUserCount()
+    public function countPublicUsers()
     {
         return $this->countBy(array(
             'status' => User::STATUS_ACTIVE,
             'is_public' => true,
         ));
+    }
+
+    /**
+     * Find public users
+     *
+     * @param int $limit
+     * @param int $offset
+     * @return array
+     */
+    public function findPublicUsers($limit, $offset)
+    {
+        return $this->findBy(array(
+            'status' => User::STATUS_ACTIVE,
+            'is_public' => true,
+        ), array('username' => 'asc'), (int) $limit, (int) $offset);
     }
 
     /**

@@ -228,19 +228,19 @@ class UserServiceTest extends \RepositoryTestCase
         ));
     }
 
-    public function testGetPublicUserCount()
+    public function testCountPublicUsers()
     {
-        $this->assertEquals(0, $this->service->getPublicUserCount());
+        $this->assertEquals(0, $this->service->countPublicUsers());
 
         $this->user->setActive();
         $this->em->persist($this->user);
         $this->em->flush();
 
-        $this->assertEquals(0, $this->service->getPublicUserCount());
+        $this->assertEquals(0, $this->service->countPublicUsers());
 
         $this->user->setPublic();
         $this->em->flush();
 
-        $this->assertEquals(1, $this->service->getPublicUserCount());
+        $this->assertEquals(1, $this->service->countPublicUsers());
     }
 }

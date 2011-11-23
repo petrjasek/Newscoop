@@ -11,7 +11,7 @@ use Newscoop\Entity\User;
  */
 class UserController extends Zend_Controller_Action
 {
-    const LIMIT = 8;
+    const LIMIT = 14;
 
     /** @var Newscoop\Services\ListUserService */
     private $service;
@@ -35,11 +35,21 @@ class UserController extends Zend_Controller_Action
 
     public function indexAction()
     {
+        $count = $this->_helper->service('user')->countPublicUsers();
+        $users = $this->_helper->service('user')->findPublicUsers(self::LIMIT, ($this->page - 1) * self::LIMIT);
+
+        $this->setViewUsers($users);
+        $this->setViewPaginator($count, self::LIMIT);
+    }
+
+    public function activeAction()
+    {
         $count = $this->service->getActiveUsers(true);
         $users = $this->service->getActiveUsers(false, $this->page, self::LIMIT);
 
         $this->setViewUsers($users);
         $this->setViewPaginator($count, self::LIMIT);
+        $this->render('index');
     }
 
     public function searchAction()
@@ -53,10 +63,13 @@ class UserController extends Zend_Controller_Action
 
     public function filterAction()
     {
-        list($from, $to) = array_map('strtolower', explode('-', $this->_getParam('f', 'a-z')));
-        $letters = range($from, $to);
-        $count = $this->service->findUsersLastNameInRange($letters, true);
-        $users = $this->service->findUsersLastNameInRange($letters, false, $this->page, self::LIMIT);
+        $character = $this->_getParam('f', 'a');
+        if (empty($character) || strlen($character) > 1) {
+            $this->_helper->redirector('index');
+        }
+
+        $count = $this->service->countByUsernameFirstCharacter($character);
+        $users = $this->service->findByUsernameFirstCharacter($character, self::LIMIT, ($this->page - 1) * self::LIMIT);
         $this->setViewUsers($users);
         $this->setViewPaginator($count, self::LIMIT);
         $this->render('index');

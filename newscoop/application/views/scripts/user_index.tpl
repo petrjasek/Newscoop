@@ -12,14 +12,13 @@
 <h1>Users index</h1>
 
 <ul class="tabs">
-    <li><a href="{{ $view->url(['controller' => 'user', 'action' => 'index'], 'default', true) }}">Active</a></li>
-    <li><a href="{{ $view->url(['controller' => 'user', 'action' => 'filter', 'f' => 'a-z'], 'default', true) }}">All</a></li>
-    <li><a href="{{ $view->url(['controller' => 'user', 'action' => 'filter', 'f' => 'a-d'], 'default', true) }}">A-D</a></li>
-    <li><a href="{{ $view->url(['controller' => 'user', 'action' => 'filter', 'f' => 'e-k'], 'default', true) }}">E-K</a></li>
-    <li><a href="{{ $view->url(['controller' => 'user', 'action' => 'filter', 'f' => 'l-p'], 'default', true) }}">L-P</a></li>
-    <li><a href="{{ $view->url(['controller' => 'user', 'action' => 'filter', 'f' => 'q-t'], 'default', true) }}">Q-T</a></li>
-    <li><a href="{{ $view->url(['controller' => 'user', 'action' => 'filter', 'f' => 'u-z'], 'default', true) }}">U-Z</a></li>
+    <li><a href="{{ $view->url(['controller' => 'user', 'action' => 'index'], 'default', true) }}">All</a></li>
+    <li><a href="{{ $view->url(['controller' => 'user', 'action' => 'active'], 'default', true) }}">Active</a></li>
     <li><a href="{{ $view->url(['controller' => 'user', 'action' => 'editors'], 'default', true) }}">Editors</a></li>
+    <li class="br"></li>
+    {{ foreach range('a', 'z') as $character }}
+    <li><a href="{{ $view->url(['controller' => 'user', 'action' => 'filter', 'f' => $character], 'default', true) }}">{{ $character|upper }}</a></li>
+    {{ /foreach }}
 </ul>
 
 <ul class="users">
