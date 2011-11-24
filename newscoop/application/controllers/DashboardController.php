@@ -68,30 +68,39 @@ class DashboardController extends Zend_Controller_Action
             }
         }
         
-        $userSubscriptionService = $this->_helper->service('user_subscription');
-        
-        $this->view->subscriber = $this->user->getSubscriber();
-        if (!$this->view->subscriber) {
-            $this->view->subscriber = $userSubscriptionService->fetchSubscriber($this->user);
-        }
-        
-        //$this->view->subscriber = false;
-        
-        if ($this->view->subscriber) {
-            $userSubscriptionKey = $userSubscriptionService->createKey($this->user);
-            $userSubscriptionService->setKey($this->user, $userSubscriptionKey);
-            $this->view->userSubscriptions = $userSubscriptionService->fetchSubscriptions($this->user);
-            $this->view->userSubscriptionKey = $userSubscriptionKey;
-        }
-        else {
-            $this->view->user_first_name = $this->user->getFirstName();
-            $this->view->user_last_name = $this->user->getLastName();
-            $this->view->user_email = $this->user->getEmail();
-        }
-                
         $this->view->form = $form;
         $this->view->user = new MetaUser($this->user);
         $this->view->first_time = $this->_getParam('first', false);
+        
+        $this->view->user_first_name = $this->user->getFirstName();
+        $this->view->user_last_name = $this->user->getLastName();
+        $this->view->user_email = $this->user->getEmail();
+        
+        $userSubscriptionService = $this->_helper->service('user_subscription');
+        
+        $this->view->subscriptionService = true;
+        
+        try {
+            $userSubscriptionService->testConnection();
+        }
+        catch(\Exception $e) {
+            $this->view->subscriptionService = false;
+            restore_error_handler();
+        }
+        
+        if ($this->view->subscriptionService == true) {
+            $this->view->subscriber = $this->user->getSubscriber();
+            if (!$this->view->subscriber) {
+                $this->view->subscriber = $userSubscriptionService->fetchSubscriber($this->user);
+            }
+            
+            if ($this->view->subscriber) {
+                $userSubscriptionKey = $userSubscriptionService->createKey($this->user);
+                $userSubscriptionService->setKey($this->user, $userSubscriptionKey);
+                $this->view->userSubscriptions = $userSubscriptionService->fetchSubscriptions($this->user);
+                $this->view->userSubscriptionKey = $userSubscriptionKey;
+            }
+        }
     }
 
     public function updateTopicsAction()
