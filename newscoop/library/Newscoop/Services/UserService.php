@@ -16,26 +16,32 @@ use Doctrine\Common\Persistence\ObjectManager,
  */
 class UserService implements ObjectRepository
 {
-    /** @var \Doctrine\Common\Persistence\ObjectManager */
+    /** @var array */
+    private $config = array();
+
+    /** @var Doctrine\Common\Persistence\ObjectManager */
     private $em;
 
-    /** @var \Zend_Auth */
+    /** @var Zend_Auth */
     private $auth;
 
-    /** @var \Newscoop\Entity\User */
+    /** @var Newscoop\Entity\User */
     private $currentUser;
 
-    /** @var \Newscoop\Entity\Repository\UserRepository */
+    /** @var Newscoop\Entity\Repository\UserRepository */
     private $repository;
 
     /**
+     * @param array $config
      * @param Doctrine\ORM\EntityManager $em
      * @param Zend_Auth $auth
      */
-    public function __construct(ObjectManager $em, \Zend_Auth $auth)
+    public function __construct(array $config, ObjectManager $em, \Zend_Auth $auth)
     {
+        $this->config = $config;
         $this->em = $em;
         $this->auth = $auth;
+        $this->repository = $this->em->getRepository('Newscoop\Entity\User');
     }
 
     /**
@@ -47,8 +53,7 @@ class UserService implements ObjectRepository
     {
         if ($this->currentUser === NULL) {
             if ($this->auth->hasIdentity()) {
-                $this->currentUser = $this->getRepository()
-                    ->find($this->auth->getIdentity());
+                $this->currentUser = $this->repository->find($this->auth->getIdentity());
             }
         }
 
@@ -63,8 +68,7 @@ class UserService implements ObjectRepository
      */
     public function find($id)
     {
-        return $this->getRepository()
-            ->find($id);
+        return $this->repository->find($id);
     }
 
     /**
@@ -74,7 +78,7 @@ class UserService implements ObjectRepository
      */
     public function findAll()
     {
-        return $this->getRepository()->findAll();
+        return $this->repository->findAll();
     }
 
     /**
@@ -88,8 +92,7 @@ class UserService implements ObjectRepository
      */
     public function findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
     {
-        return $this->getRepository()
-            ->findBy($criteria, $orderBy, $limit, $offset);
+        return $this->repository->findBy($criteria, $orderBy, $limit, $offset);
     }
 
     /**
@@ -100,8 +103,7 @@ class UserService implements ObjectRepository
      */
     public function findOneBy(array $criteria)
     {
-        return $this->getRepository()
-            ->findOneBy($criteria);
+        return $this->repository->findOneBy($criteria);
     }
 
     /**
@@ -125,7 +127,7 @@ class UserService implements ObjectRepository
             unset($data['password']);
         }
 
-        $this->getRepository()->save($user, $data);
+        $this->repository->save($user, $data);
         $this->em->flush();
         return $user;
     }
@@ -142,7 +144,7 @@ class UserService implements ObjectRepository
             throw new \InvalidArgumentException("You can't delete yourself");
         }
 
-        $this->getRepository()->delete($user);
+        $this->repository->delete($user);
     }
 
     /**
@@ -163,7 +165,7 @@ class UserService implements ObjectRepository
         $username = $user->getUsername();
 
         for ($i = '';; $i++) {
-            $conflict = $this->getRepository()->findOneBy(array(
+            $conflict = $this->repository->findOneBy(array(
                 'username' => "$username{$i}",
             ));
 
@@ -244,7 +246,7 @@ class UserService implements ObjectRepository
      */
     public function checkUsername($username)
     {
-        return $this->getRepository()->isUnique('username', $username);
+        return $this->repository->isUnique('username', $username);
     }
 
     /**
@@ -255,7 +257,7 @@ class UserService implements ObjectRepository
      */
     public function findByAuthor($authorId)
     {
-        return $this->getRepository()->findOneBy(array(
+        return $this->repository->findOneBy(array(
             'author' => $authorId,
         ));
     }
@@ -267,7 +269,7 @@ class UserService implements ObjectRepository
      */
     public function countAll()
     {
-        return $this->getRepository()->countAll();
+        return $this->repository->countAll();
     }
 
     /**
@@ -278,7 +280,7 @@ class UserService implements ObjectRepository
      */
     public function countBy(array $criteria)
     {
-        return $this->getRepository()->countBy($criteria);
+        return $this->repository->countBy($criteria);
     }
 
     /**
@@ -308,18 +310,110 @@ class UserService implements ObjectRepository
             'is_public' => true,
         ), array('username' => 'asc'), (int) $limit, (int) $offset);
     }
+    
+    /**
+     * Get random list of users
+     *
+     * @param int $limit
+     * @return array
+     */
+    public function getRandomList($limit = 25)
+    {
+        return $this->repository->getRandomList($limit);
+    }
+    
+    /**
+     * List editors
+     *
+     * @param int $limit
+     * @param int $offset
+     * @return array
+     */
+    public function findEditors($limit = NULL, $offset = NULL)
+    {
+        return $this->repository->findEditors($this->config['blog']['role'], $limit, $offset);
+    }
 
     /**
-     * Get repository for user entity
+     * Get editors count
      *
-     * @return Newscoop\Entity\Repository\UserRepository
+     * @return int
      */
-    private function getRepository()
+    public function getEditorsCount()
     {
-        if (null === $this->repository) {
-            $this->repository = $this->em->getRepository('Newscoop\Entity\User');
+        return $this->repository->getEditorsCount($this->config['blog']['role']);
+    }
+
+    /**
+     * List active users
+     *
+     * @return array
+     */
+    public function getActiveUsers($countOnly=false, $page=1, $limit=8)
+    {
+        $offset = ($page-1) * $limit;
+
+        $result = $this->repository->findActiveUsers($countOnly, $offset, $limit, $this->config['blog']['role']);
+
+        if ($countOnly) {
+            return $result[1];
         }
 
-        return $this->repository;
+        return $result;
+    }
+
+    /**
+     * Find user by string
+     *
+     * @return array
+     */
+    public function findUsersBySearch($search, $countOnly=false, $page=1, $limit=25)
+    {
+        $offset = ($page-1) * $limit;
+
+        $result = $this->repository->searchUsers($search, $countOnly, $offset, $limit);
+
+        if ($countOnly) {
+            return $result[1];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Find users by first character of username
+     *
+     * @param string $character
+     * @param int $limit
+     * @param int $offset
+     * @return array
+     */
+    public function findByUsernameFirstCharacter($character, $limit = 25, $offset = 0)
+    {
+        return $this->repository->findByUsernameFirstCharacterIn($this->getCharacters($character), $limit, $offset);
+    }
+
+    /**
+     * Count users by first character of username
+     *
+     * @param string $character
+     * @return int
+     */
+    public function countByUsernameFirstCharacter($character)
+    {
+        return $this->repository->countByUsernameFirstCharacterIn($this->getCharacters($character));
+    }
+
+    /**
+     * Get characters for given character group
+     *
+     * @param string $character
+     * @return array
+     */
+    private function getCharacters($character)
+    {
+        $character = strtolower($character);
+        return isset($this->config['characterGroup'][$character]) ?
+            explode(' ', $this->config['characterGroup'][$character]) : array($character);
     }
 }

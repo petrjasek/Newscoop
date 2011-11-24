@@ -152,7 +152,16 @@ class UserRepository extends EntityRepository
         return !$qb->getQuery()->getSingleScalarResult();
     }
 
-    public function findActiveUsers($countOnly, $offset, $limit)
+    /**
+     * Find active members of community
+     *
+     * @param bool $countOnly
+     * @param int $offset
+     * @param int $limit
+     * @param int $blogRoleId
+     * @return array|int
+     */
+    public function findActiveUsers($countOnly, $offset, $limit, $blogRoleId)
     {
         $qb = $this->getEntityManager()->createQueryBuilder();
 
@@ -163,56 +172,19 @@ class UserRepository extends EntityRepository
             $qb->select('u');
         }
 
-        $qb->from('Newscoop\Entity\User', 'u');
+        $qb->from('Newscoop\Entity\User', 'u')
+            ->leftJoin('u.groups', 'g', Expr\Join::WITH, 'g.id = ' . $blogRoleId);
 
         $qb->where($qb->expr()->eq("u.status", User::STATUS_ACTIVE));
         $qb->andWhere($qb->expr()->eq("u.is_public", true));
+
+        $editorsFilter = $qb->expr()->orX();
+        $editorsFilter->add($qb->expr()->isNull('u.author'));
+        $editorsFilter->add($qb->expr()->isNotNull('g.id'));
+        $qb->andWhere($editorsFilter);
 
         if ($countOnly === false) {
             $qb->orderBy('u.points', 'DESC');
-            $qb->addOrderBy('u.id', 'ASC');
-
-            $qb->setFirstResult($offset);
-            $qb->setMaxResults($limit);
-
-            return $qb->getQuery()->getResult();
-        }
-        else {
-            return $qb->getQuery()->getOneOrNullResult();
-        }
-    }
-
-    /**
-     * Return Users if their last name begins with one of the letter passed in.
-     *
-     * @param array $letters = ['a', 'b']
-     *
-     * @return array Newscoop\Entity\User
-     */
-    public function findUsersLastNameInRange($letters, $countOnly, $offset, $limit)
-    {
-        $qb = $this->getEntityManager()->createQueryBuilder();
-
-        if ($countOnly) {
-            $qb->select('COUNT(u.id)');
-        }
-        else {
-            $qb->select('u');
-        }
-
-        $qb->from('Newscoop\Entity\User', 'u');
-
-        $qb->where($qb->expr()->eq("u.status", User::STATUS_ACTIVE));
-        $qb->andWhere($qb->expr()->eq("u.is_public", true));
-
-        $letterIndex = $qb->expr()->orx();
-        foreach ($letters as $letter) {
-            $letterIndex->add($qb->expr()->like("LOWER(u.username)", "'$letter%'"));
-        }
-        $qb->andWhere($letterIndex);
-
-        if ($countOnly === false) {
-            $qb->orderBy('u.username', 'ASC');
             $qb->addOrderBy('u.id', 'ASC');
 
             $qb->setFirstResult($offset);

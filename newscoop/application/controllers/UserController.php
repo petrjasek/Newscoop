@@ -13,7 +13,7 @@ class UserController extends Zend_Controller_Action
 {
     const LIMIT = 14;
 
-    /** @var Newscoop\Services\ListUserService */
+    /** @var Newscoop\Services\UserService */
     private $service;
 
     /** @var int */
@@ -21,7 +21,7 @@ class UserController extends Zend_Controller_Action
 
     public function init()
     {
-        $this->service = $this->_helper->service('user.list');
+        $this->service = $this->_helper->service('user');
 
         $this->_helper->contextSwitch()
             ->addActionContext('send-email', 'json')
@@ -35,8 +35,8 @@ class UserController extends Zend_Controller_Action
 
     public function indexAction()
     {
-        $count = $this->_helper->service('user')->countPublicUsers();
-        $users = $this->_helper->service('user')->findPublicUsers(self::LIMIT, ($this->page - 1) * self::LIMIT);
+        $count = $this->service->countPublicUsers();
+        $users = $this->service->findPublicUsers(self::LIMIT, ($this->page - 1) * self::LIMIT);
 
         $this->setViewUsers($users);
         $this->setViewPaginator($count, self::LIMIT);
