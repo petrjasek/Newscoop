@@ -60,7 +60,12 @@ class UserSubscriptionService
             return(false);
         }
         
-        $xml = new \SimpleXMLElement($response->getBody());
+        try {
+            $xml = new \SimpleXMLElement($response->getBody());
+        }
+        catch (\Zend_Exception $e) {
+            return(false);
+        }
         
         $subscriber = $xml->subscriber[0] ? (int) $xml->subscriber[0]->subscriberId : false;
         if (is_numeric($subscriber)) {
