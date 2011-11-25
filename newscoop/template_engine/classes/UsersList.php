@@ -41,7 +41,7 @@ class UsersList extends ListObject
 	 */
 	protected function CreateList($p_start = 0, $p_limit = 0, array $p_parameters, &$p_count)
 	{
-        $service = $GLOBALS['controller']->getHelper('service')->getService('user.list');
+        $service = $GLOBALS['controller']->getHelper('service')->getService('user');
 
         if (in_array('random', array_keys($this->m_order))) { // random ordering
             $users = $service->getRandomList($p_limit);
