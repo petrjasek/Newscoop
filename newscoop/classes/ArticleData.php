@@ -319,30 +319,38 @@ class ArticleData extends DatabaseObject {
 				return '';
 			}
 		}
+
 		$alignTag = '';
 		if (isset($attrs['align'])) {
 			$alignTag = 'align="'.$attrs['align'].'"';
 		}
+
 		$altTag = '';
 		if (isset($attrs['alt']) && strlen($attrs['alt']) > 0) {
 			$altTag = 'alt="'.$attrs['alt'].'"';
 		}
+
 		$captionTag = '';
 		if (isset($attrs['title']) && strlen($attrs['title']) > 0) {
 			$captionTag = 'sub="'.$attrs['title'].'"';
 		}
+
+        $widthTag = '';
 		if (isset($attrs['width']) && strlen($attrs['width']) > 0) {
 			$widthTag = 'width="'.$attrs['width'].'"';
 		}
+
+        $heightTag = '';
 		if (isset($attrs['height']) && strlen($attrs['height']) > 0) {
 			$heightTag = 'height="'.$attrs['height'].'"';
 		}
+
 		$ratioTag = '';
 		if (isset($imageRatio) && ($imageRatio > 0 && $imageRatio < 100)) {
 			$ratioTag = 'ratio="'.$imageRatio.'"';
 		}
-		$imageTag = "<!** Image $templateId $alignTag $altTag $captionTag $widthTag $heightTag $ratioTag>";
-		return $imageTag;
+
+		return "<!** Image $templateId $alignTag $altTag $captionTag $widthTag $heightTag $ratioTag>";
 	} // fn TransformImageTags
 
 } // class ArticleData
