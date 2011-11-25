@@ -257,6 +257,7 @@ class PublisherService
                 'Photographer' => 'sda',
                 'Description' => $caption,
                 'Source' => 'newsfeed',
+                'Status' => 'approved',
             );
 
             try {
