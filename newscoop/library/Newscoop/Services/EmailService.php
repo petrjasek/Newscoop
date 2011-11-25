@@ -48,7 +48,7 @@ class EmailService
     public function sendConfirmationToken(User $user)
     {
         $message = $this->view->action('confirm', 'email', 'default', array(
-            'user' => $user->getId(),
+            'user' => $user,
             'token' => $this->tokenService->generateToken($user, 'email.confirm'),
             'format' => null,
         ));
@@ -65,7 +65,7 @@ class EmailService
     public function sendPasswordRestoreToken(User $user)
     {
         $message = $this->view->action('password-restore', 'email', 'default', array(
-            'user' => $user->getId(),
+            'user' => $user,
             'token' => $this->tokenService->generateToken($user, 'password.restore'),
             'format' => null,
         ));
