@@ -272,6 +272,16 @@ class Image extends DatabaseObject
         return $this->m_data['Status'];
     } // fn getSource
 
+    /**
+     * Test if image is approved
+     *
+     * @return bool
+     */
+    public function isApproved()
+    {
+        return $this->m_data['Status'] == 'approved';
+    }
+
 	/**
 	 * Return the full path to the image file.
 	 * @return string
