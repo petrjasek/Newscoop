@@ -15,6 +15,9 @@ use Newscoop\Entity\User,
  */
 class EmailService
 {
+    const CHARSET = 'utf-8';
+    const PLACEHOLDER_SUBJECT = 'subject';
+
     /** @var array */
     private $config = array();
 
@@ -50,8 +53,7 @@ class EmailService
             'format' => null,
         ));
 
-        // @todo use config
-        $this->send("Registrierung bei tageswoche.ch", $message, $user->getEmail());
+        $this->send($this->view->placeholder(self::PLACEHOLDER_SUBJECT), $message, $user->getEmail());
     }
 
     /**
@@ -68,8 +70,7 @@ class EmailService
             'format' => null,
         ));
 
-        // @todo use config
-        $this->send("Passwort für tageswoche.ch zurücksetzen", $message, $user->getEmail());
+        $this->send($this->view->placeholder(self::PLACEHOLDER_SUBJECT), $message, $user->getEmail());
     }
 
     /**
@@ -94,8 +95,8 @@ class EmailService
             'user' => $user,
         ));
 
-        $mail = new \Zend_Mail('utf-8');
-        $mail->setSubject("Neuer Kommentar zum Artikel " . $article->getTitle());
+        $mail = new \Zend_Mail(self::CHARSET);
+        $mail->setSubject($this->view->placeholder(self::PLACEHOLDER_SUBJECT));
         $mail->setBodyHtml($message);
         $mail->setFrom($user ? $user->getEmail() : $this->config['from']);
 
@@ -130,7 +131,7 @@ class EmailService
      */
     private function send($subject, $message, $tos, $from = null)
     {
-        $mail = new \Zend_Mail('utf-8');
+        $mail = new \Zend_Mail(self::CHARSET);
         $mail->setSubject($subject);
         $mail->setBodyText($message);
         $mail->setFrom(isset($from) ? $from : $this->config['from']);
