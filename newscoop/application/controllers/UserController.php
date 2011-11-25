@@ -19,6 +19,9 @@ class UserController extends Zend_Controller_Action
     /** @var int */
     private $page;
 
+    /** @var int */
+    private $offset;
+
     public function init()
     {
         $this->service = $this->_helper->service('user');
@@ -31,15 +34,18 @@ class UserController extends Zend_Controller_Action
         if ($this->page < 1) {
             $this->page = 1;
         }
+
+	$this->offset = ($this->page - 1) * self::LIMIT;
     }
 
     public function indexAction()
     {
         $count = $this->service->countPublicUsers();
-        $users = $this->service->findPublicUsers(self::LIMIT, ($this->page - 1) * self::LIMIT);
+        $users = $this->service->findPublicUsers(self::LIMIT, $this->offset);
 
         $this->setViewUsers($users);
         $this->setViewPaginator($count, self::LIMIT);
+	$this->view->current = $this->_getParam('action');
     }
 
     public function activeAction()
@@ -49,6 +55,7 @@ class UserController extends Zend_Controller_Action
 
         $this->setViewUsers($users);
         $this->setViewPaginator($count, self::LIMIT);
+	$this->view->current = $this->_getParam('action');
         $this->render('index');
     }
 
@@ -58,6 +65,7 @@ class UserController extends Zend_Controller_Action
         $users = $this->service->findUsersBySearch($query);
         $this->setViewUsers($users);
         $this->setViewPaginator(0, self::LIMIT);
+	$this->view->current = $this->_getParam('action');
         $this->render('index');
     }
 
@@ -69,19 +77,21 @@ class UserController extends Zend_Controller_Action
         }
 
         $count = $this->service->countByUsernameFirstCharacter($character);
-        $users = $this->service->findByUsernameFirstCharacter($character, self::LIMIT, ($this->page - 1) * self::LIMIT);
+        $users = $this->service->findByUsernameFirstCharacter($character, self::LIMIT, $this->offset);
         $this->setViewUsers($users);
         $this->setViewPaginator($count, self::LIMIT);
+	$this->view->current = $this->_getParam('action');
+	$this->view->currentCharacter = $this->_getParam('f');
         $this->render('index');
     }
 
     public function editorsAction()
     {
         $count = $this->service->getEditorsCount();
-        $users = $this->service->findEditors(self::LIMIT, ($this->page - 1) * self::LIMIT);
+        $users = $this->service->findEditors(self::LIMIT, $this->offset);
         $this->setViewUsers($users);
         $this->setViewPaginator($count, self::LIMIT);
-        $this->view->active = 'editors';
+	$this->view->current = $this->_getParam('action');
         $this->render('index');
     }
 
