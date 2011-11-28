@@ -34,12 +34,20 @@ if (!is_file('Zend/Application.php')) {
 /** Zend_Application */
 require_once 'Zend/Application.php';
 
-// Create application, bootstrap, and run
-$application = new Zend_Application(
-    APPLICATION_ENV,
-    APPLICATION_PATH . '/configs/application.ini'
-);
+$options = array( "config" => array());
+$options['config'][] = APPLICATION_PATH . '/configs/application.ini';
+// If a server name is defined for the application use that SERVER_NAME.ini aswell
+if( getenv( 'APPLICATION_SERVER_NAME' ) ) {
+    $options['config'][] = APPLICATION_PATH . '/configs/' . getenv( 'APPLICATION_SERVER_NAME' ) . '.ini';
+}
 
+
+// Create application, bootstrap, and run
+$application = new Zend_Application
+(
+    APPLICATION_ENV,
+    $options
+);
 $application->bootstrap();
 if (empty($GLOBALS['zend_bootstrap_only'])) { // workaround for CS-3806
     $application->run();
