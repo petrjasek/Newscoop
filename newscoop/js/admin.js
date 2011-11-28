@@ -3,19 +3,17 @@ var terms = [];
 $(function() {
 	$('.flash ui-state-error').click(function(){ $(this).hide(); })
     // main menu
-    $('.main-menu-bar ul.navigation > li > a').each(function(i) {
+    $('.main-menu-bar ul.navigation > li > a[href^="#"]').each(function(i) {
         var menu = $(this);
 
         // init menu for all but first
-        if (i > 0) {
-            $('<span />').addClass('fg-button-ui-icon fg-button-ui-icon-triangle-1-s').prependTo(menu);
+        $('<span />').addClass('fg-button-ui-icon fg-button-ui-icon-triangle-1-s').prependTo(menu);
 
-            menu.topmenu({
-                content: '<ul>' + menu.next('ul').html() + '</ul>',
-                flyOut: true,
-                showSpeed: 150
-            });
-        }
+        menu.topmenu({
+            content: '<ul>' + menu.next('ul').html() + '</ul>',
+            flyOut: true,
+            showSpeed: 150
+        });
 
         // add css/attributes to main links
         menu.attr('tabindex', i)
