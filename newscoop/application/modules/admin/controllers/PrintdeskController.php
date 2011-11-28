@@ -10,11 +10,25 @@
  */
 
 /**
- * @Acl(resource="user-group", action="manage")
+ * @Acl(resource="printdesk")
  */
 class Admin_PrintdeskController extends Zend_Controller_Action
 {
+   
+    /**
+     * @Acl(ignore="1")
+     */         
     public function indexAction()
+    {
+		$user = new Zend_Session_Namespace('user');
+        unset($user->allowPrindesk);
+        $this->_forward("manage");
+    }
+     
+    /**
+     * @Acl(action="manage")
+     */
+    public function manageAction()
     {
 		$user = new Zend_Session_Namespace('user');
         $user->allowPrindesk = true;
