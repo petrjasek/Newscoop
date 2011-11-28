@@ -12,7 +12,7 @@ if ( ("cli" == php_sapi_name()) && (!isset($GLOBALS['g_cliInited'])) ) {
 }
 */
 
-$trailers_default_locks = NewsImportEnv::GetLockDir('trailers');
+$trailers_default_locks = NewsImportEnv::GetLockDir();
 
 // whether we can start now
 $locks_path_dir = NewsImportEnv::AbsolutePath($trailers_default_locks);

@@ -473,7 +473,7 @@ class NewsImport
                 $f_movie_trailer = (isset($one_event['movie_trailer']) && (!empty($one_event['movie_trailer']))) ? $one_event['movie_trailer'] : '';
                 $article_data->setProperty('Fmovie_trailer', $f_movie_trailer);
 
-                $f_movie_trailer = (isset($one_event['movie_trailer_vimeo']) && (!empty($one_event['movie_trailer_vimeo']))) ? $one_event['movie_trailer_vimeo'] : '';
+                $f_movie_trailer_vimeo = (isset($one_event['movie_trailer_vimeo']) && (!empty($one_event['movie_trailer_vimeo']))) ? $one_event['movie_trailer_vimeo'] : '';
                 $article_data->setProperty('Fmovie_trailer_vimeo', $f_movie_trailer_vimeo);
 
                 $f_movie_trailer_width = 0;
@@ -489,6 +489,11 @@ class NewsImport
                     }
                     if (isset($one_trailer_info['codec']) && (!empty($one_trailer_info['codec']))) {
                         $f_movie_trailer_codec = $one_trailer_info['codec'];
+                    }
+                    if (empty($f_movie_trailer_codec)) {
+                        if (isset($one_trailer_info['format']) && (!empty($one_trailer_info['format']))) {
+                            $f_movie_trailer_codec = $one_trailer_info['format'];
+                        }
                     }
                 }
                 $article_data->setProperty('Fmovie_trailer_width', $f_movie_trailer_width);

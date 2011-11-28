@@ -19,16 +19,15 @@ cron outside import 2:
 
 $class_dir = dirname(__FILE__);
 
-$vimeolib_path = $class_dir . DIRECTORY_SEPARATOR . '/vimeolib/vimeo.php';
+$vimeolib_path = $class_dir . DIRECTORY_SEPARATOR . 'vimeolib' . DIRECTORY_SEPARATOR . 'vimeo.php';
 require_once($vimeolib_path);
-
-$local_trailer_dir = '/trailer_dir/';
-$trailres_db_path = '/sqlite_path/movies.sqlite';
 
 class TrailerProcessor {
 
+    static var $m_max_run = 100;
+    static var $m_max_errors = 5;
 
-    private function trailerDbExists($p_dbPath)
+    public function trailerDbExists($p_dbPath)
     {
         $path_mode = 0755;
 
@@ -45,7 +44,9 @@ class TrailerProcessor {
             source_timestamp INTEGER DEFAULT 0,
             source_url TEXT DEFAULT "",
             local_name TEXT DEFAULT "",
-            video_info TEXT DEFAULT "{}",
+            video_codec TEXT DEFAULT "",
+            video_width TEXT DEFAULT "",
+            video_height TEXT DEFAULT "",
             state TEXT DEFAULT "",
             error_count INTEGER DEFAULT 0
         )';
@@ -97,6 +98,7 @@ class TrailerProcessor {
     }
 
 
+/*
     public function downloadAllTrailers($p_moviesDatabase, $p_saveDir)
     {
 
@@ -110,14 +112,10 @@ class TrailerProcessor {
 
 
     }
+*/
 
 
-
-
-
-
-
-    public function uploadOneVideo($p_dbPath, $p_videoDir)
+    public function uploadOneTrailer($p_dbPath, $p_videoDir)
     {
         $vimeo_id = null;
 
@@ -179,6 +177,7 @@ class TrailerProcessor {
         return true;
     }
 
+/*
     public function uploadAllVideos()
     {
         while (true) {
@@ -189,13 +188,59 @@ class TrailerProcessor {
         }
 
     }
+*/
+
+    public function someLeft($p_moviesDatabase, $p_mode) {
+        //return true;
+        $known_modes = array('download' => 'to_download', 'upload' => 'to_upload');
+        if (!array_key_exists($p_mode, $known_modes)) {
+            return false;
+        }
+        $mode_state = $known_modes[$p_mode];
+
+        $table_name = 'trailers';
+        $sqlite_name = $p_moviesDatabase;
+
+        $sel_req = 'SELECT count(*) AS count_left FROM ' . $table_name . ' WHERE state = "' . $mode_state . '"';
+        if (0 < self::$m_max_errors) {
+            $sel_req .= ' AND error_count < ' . self::$m_max_errors . '';
+        }
+
+        @$db = new PDO ('sqlite:' . $sqlite_name);
+        $stmt = $db->prepare($sel_req);
+        $res = $stmt->execute();
+        if ($res) {
+            $res = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$res) {
+                return false;
+            }
+            $movie_key_old = $res['count_left'];
+            ;
+        }
 
 
-    public function AskForTrailers()
+        return true;
+    }
+
+
+    public static function AskForTrailers()
     {
         // process upto $max (... 100) trailers at one run
 
+        $incl_dir = dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'include';
+        $defspool_path = $incl_dir . DIRECTORY_SEPARATOR . 'default_spool.php';
+        require_once($defspool_path);
+        // $newsimport_default_cache;
+
+        $cache_dir = NewsImportEnv::AbsolutePath($newsimport_default_cache, true);
+
+        $local_trailer_dir = $cache_dir . 'trailers';
+        $trailres_db_path = $cache_dir . 'movies_info.sqlite';
+
         $max_run = self::$m_max_run;
+
+        $trail_proc = new TrailerProcessor();
+        $trail_proc->trailerDbExists($trailres_db_path);
 
         $cur_run = 0;
         while (true) {
@@ -204,8 +249,8 @@ class TrailerProcessor {
                 break;
             }
 
-            $some_left = $this->downloadOneTrailer();
-            if (!$some_left) {
+            $trail_proc->downloadOneTrailer($trailres_db_path, $local_trailer_dir);
+            if (!$trail_proc->someLeft($trailres_db_path, 'download')) {
                 break;
             }
 
@@ -218,8 +263,8 @@ class TrailerProcessor {
                 break;
             }
 
-            $some_left = $this->uploadOneTrailer();
-            if (!$some_left) {
+            $trail_proc->uploadOneTrailer($trailres_db_path, $local_trailer_dir);
+            if (!$trail_proc->someLeft($trailres_db_path, 'upload')) {
                 break;
             }
 
