@@ -62,11 +62,16 @@ class NewsImportEnv
         }
         require_once 'Zend/Application.php';
 
+/*
         // Create application, bootstrap, and run
         $application = new Zend_Application(
             APPLICATION_ENV,
             APPLICATION_PATH . '/configs/application.ini'
         );
+*/
+
+        $boot_path = $GLOBALS['g_campsiteDir'].DIRECTORY_SEPARATOR.'application.php';
+        require_once($boot_path);
 
         $application->bootstrap();
 

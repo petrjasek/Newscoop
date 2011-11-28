@@ -178,6 +178,9 @@ class PublisherServiceTest extends \RepositoryTestCase
     {
         $images = \ArticleImage::GetImagesByArticleNumber($article->getArticleNumber());
         $this->assertEquals($count, count($images));
+        foreach ($images as $image) {
+            $this->assertTrue($image->getImage()->isApproved(), "Image not approved");
+        }
     }
 
     /**

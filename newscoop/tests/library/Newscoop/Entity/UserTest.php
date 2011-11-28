@@ -291,4 +291,72 @@ class UserTest extends \RepositoryTestCase
         $user = array_shift($this->repository->findAll());
         $this->assertEquals('praha', $user->getAttribute('city'));
     }
+
+    public function testFindByUsernameFirstCharacterIn()
+    {
+        $user = new User(uniqid('email', true));
+        $user->setUsername('Foo');
+        $user->setPublic(true);
+        $user->setActive(true);
+        $this->em->persist($user);
+
+        $user = new User(uniqid('email', true));
+        $user->setUsername('bar');
+        $user->setActive(true);
+        $user->setPublic(true);
+        $this->em->persist($user);
+
+        $user = new User(uniqid('email', true));
+        $user->setUsername('other');
+        $user->setActive(true);
+        $user->setPublic(true);
+        $this->em->persist($user);
+
+        $this->em->flush();
+
+        $users = $this->repository->findByUsernameFirstCharacterIn(array('f', 'b'), 100, 0);
+        $this->assertEquals(2, count($users));
+        $this->assertEquals(2, $this->repository->countByUsernameFirstCharacterIn(array('f', 'b')));
+    }
+
+    public function testFindByUsernameFirstCharacterInInactiveUser()
+    {
+        $user = new User(uniqid('email', true));
+        $user->setUsername('FooInactive');
+        $user->setPublic(true);
+        $this->em->persist($user);
+        $this->em->flush();
+
+        $this->assertEmpty($this->repository->findByUsernameFirstCharacterIn(array('f'), 100, 0));
+        $this->assertEquals(0, $this->repository->countByUsernameFirstCharacterIn(array('f')));
+    }
+
+    public function testFindByUsernameFirstCharacterInNotPublicUser()
+    {
+        $user = new User(uniqid('email', true));
+        $user->setUsername('FooNonPublic');
+        $user->setActive(true);
+        $user->setPublic(false);
+        $this->em->persist($user);
+        $this->em->flush();
+
+        $this->assertEmpty($this->repository->findByUsernameFirstCharacterIn(array('f'), 100, 0));
+        $this->assertEquals(0, $this->repository->countByUsernameFirstCharacterIn(array('f')));
+    }
+
+    /**
+     * @expectedException InvalidArgumentException
+     */
+    public function testFindByUsernameFirstCharacterInEmpty()
+    {
+        $this->repository->findByUsernameFirstCharacterIn(array());
+    }
+
+    /**
+     * @expectedException InvalidArgumentException
+     */
+    public function testCountByUsernameFirstCharacterInEmpty()
+    {
+        $this->repository->countByUsernameFirstCharacterIn(array());
+    }
 }

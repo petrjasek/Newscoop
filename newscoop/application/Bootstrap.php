@@ -75,12 +75,9 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
             ->addArgument(new sfServiceReference('view'));
 
         $container->register('user', 'Newscoop\Services\UserService')
+            ->addArgument('%config%')
             ->addArgument(new sfServiceReference('em'))
             ->addArgument(Zend_Auth::getInstance());
-
-        $container->register('user.list', 'Newscoop\Services\ListUserService')
-            ->addArgument('%config%')
-            ->addArgument(new sfServiceReference('em'));
 
         $container->register('user.token', 'Newscoop\Services\UserTokenService')
             ->addArgument(new sfServiceReference('em'));
@@ -283,5 +280,11 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
         ));
 
         Zend_Registry::set('Zend_Translate', $translate);
+    }
+
+    protected function _initAuthStorage()
+    {
+        $storage = new Zend_Auth_Storage_Session('Zend_Auth_Storage');
+        Zend_Auth::getInstance()->setStorage($storage);
     }
 }

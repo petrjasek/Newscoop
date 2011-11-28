@@ -1,6 +1,6 @@
 <phpunit bootstrap="./application/bootstrap.php" colors="true" backupGlobals="false">
 
-    <testsuite name="Application">
+    <testsuite name="Library">
         <directory>./library</directory>
     </testsuite>
 
@@ -28,7 +28,5 @@
 
     <logging>
         <log type="coverage-html" target="report" charset="UTF-8" you="true" hightlight="true" lowUpperBound="50" highLowerBound="80" />
-        <log type="testdox-html" target="report/testdox.html" />
     </logging>
-
 </phpunit>
