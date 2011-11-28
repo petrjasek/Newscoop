@@ -11,17 +11,20 @@ use Newscoop\Entity\User;
  */
 class UserController extends Zend_Controller_Action
 {
-    const LIMIT = 8;
+    const LIMIT = 14;
 
-    /** @var Newscoop\Services\ListUserService */
+    /** @var Newscoop\Services\UserService */
     private $service;
 
     /** @var int */
     private $page;
 
+    /** @var int */
+    private $offset;
+
     public function init()
     {
-        $this->service = $this->_helper->service('user.list');
+        $this->service = $this->_helper->service('user');
 
         $this->_helper->contextSwitch()
             ->addActionContext('send-email', 'json')
@@ -31,15 +34,29 @@ class UserController extends Zend_Controller_Action
         if ($this->page < 1) {
             $this->page = 1;
         }
+
+	$this->offset = ($this->page - 1) * self::LIMIT;
     }
 
     public function indexAction()
+    {
+        $count = $this->service->countPublicUsers();
+        $users = $this->service->findPublicUsers(self::LIMIT, $this->offset);
+
+        $this->setViewUsers($users);
+        $this->setViewPaginator($count, self::LIMIT);
+	$this->view->current = $this->_getParam('action');
+    }
+
+    public function activeAction()
     {
         $count = $this->service->getActiveUsers(true);
         $users = $this->service->getActiveUsers(false, $this->page, self::LIMIT);
 
         $this->setViewUsers($users);
         $this->setViewPaginator($count, self::LIMIT);
+	$this->view->current = $this->_getParam('action');
+        $this->render('index');
     }
 
     public function searchAction()
@@ -48,27 +65,33 @@ class UserController extends Zend_Controller_Action
         $users = $this->service->findUsersBySearch($query);
         $this->setViewUsers($users);
         $this->setViewPaginator(0, self::LIMIT);
+	$this->view->current = $this->_getParam('action');
         $this->render('index');
     }
 
     public function filterAction()
     {
-        list($from, $to) = array_map('strtolower', explode('-', $this->_getParam('f', 'a-z')));
-        $letters = range($from, $to);
-        $count = $this->service->findUsersLastNameInRange($letters, true);
-        $users = $this->service->findUsersLastNameInRange($letters, false, $this->page, self::LIMIT);
+        $character = $this->_getParam('f', 'a');
+        if (empty($character) || strlen($character) > 1) {
+            $this->_helper->redirector('index');
+        }
+
+        $count = $this->service->countByUsernameFirstCharacter($character);
+        $users = $this->service->findByUsernameFirstCharacter($character, self::LIMIT, $this->offset);
         $this->setViewUsers($users);
         $this->setViewPaginator($count, self::LIMIT);
+	$this->view->current = $this->_getParam('action');
+	$this->view->currentCharacter = $this->_getParam('f');
         $this->render('index');
     }
 
     public function editorsAction()
     {
         $count = $this->service->getEditorsCount();
-        $users = $this->service->findEditors(self::LIMIT, ($this->page - 1) * self::LIMIT);
+        $users = $this->service->findEditors(self::LIMIT, $this->offset);
         $this->setViewUsers($users);
         $this->setViewPaginator($count, self::LIMIT);
-        $this->view->active = 'editors';
+	$this->view->current = $this->_getParam('action');
         $this->render('index');
     }
 

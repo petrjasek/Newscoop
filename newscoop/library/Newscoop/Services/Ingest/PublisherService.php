@@ -112,7 +112,10 @@ class PublisherService
      */
     public function getPublication()
     {
-        $publications = $GLOBALS['Campsite']['publications'];
+        $publications = \Publication::GetPublications(null, null, array(
+            'ORDER BY' => array('Id' => 'ASC'),
+        ));
+
         if (empty($publications)) {
             throw new \RuntimeException("No publications defined.");
         }
@@ -254,6 +257,7 @@ class PublisherService
                 'Photographer' => 'sda',
                 'Description' => $caption,
                 'Source' => 'newsfeed',
+                'Status' => 'approved',
             );
 
             try {

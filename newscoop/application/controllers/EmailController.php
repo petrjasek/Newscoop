@@ -29,8 +29,7 @@ class EmailController extends Zend_Controller_Action
         $this->getHelper('layout')
             ->disableLayout();
 
-        $server = $this->getRequest()->getServer();
-        $this->view->publication = $server['SERVER_NAME'];
+        $this->view->publication = $this->getRequest()->getServer('SERVER_NAME', 'localhost');
 
         $this->_helper->contextSwitch()
             ->addActionContext('comment-notify', 'xml')
@@ -39,13 +38,13 @@ class EmailController extends Zend_Controller_Action
 
     public function confirmAction()
     {
-        $this->view->user = $this->_getParam('user');
+        $this->view->user = new \MetaUser($this->_getParam('user'));
         $this->view->token = $this->_getParam('token');
     }
 
     public function passwordRestoreAction()
     {
-        $this->view->user = $this->_getParam('user');
+        $this->view->user = new \MetaUser($this->_getParam('user'));
         $this->view->token = $this->_getParam('token');
     }
 
