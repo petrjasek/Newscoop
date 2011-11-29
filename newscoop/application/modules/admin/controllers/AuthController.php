@@ -17,6 +17,9 @@ class Admin_AuthController extends Zend_Controller_Action
 
     public function logoutAction()
     {
+        $user = new Zend_Session_Namespace('user');
+        unset($user->allowPrindesk);
+        
         $auth = Zend_Auth::getInstance();
         if ($auth->hasIdentity()) {
             Article::UnlockByUser((int) $auth->getIdentity());
