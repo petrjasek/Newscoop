@@ -58,6 +58,14 @@ $pages = array(
         'label' => getGS('Users'),
         'uri' => '#',
     ),
+    array(
+        'label' => getGS('Printdesk'),
+        'module' => 'admin',
+        'controller' => 'printdesk',
+        'action' => 'index',
+        'resource' => 'printdesk',
+        'privilege' => 'manage',
+    ),    
 );
 
 $pages[1]['pages'][] = array(
@@ -131,7 +139,7 @@ foreach ($Campsite['publications'] as $publication) {
     $pubId = $publication->getPublicationId();
     $publication_page = array(
         'label' => $publication->getName(),
-        'uri' => $view->baseUrl("admin/pub/?Pub=$pubId"),
+        'uri' => $view->baseUrl("admin/issues/?Pub=$pubId"),
     );
 
     // add content/publication/issue
