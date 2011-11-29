@@ -24,12 +24,17 @@ require_once($vimeolib_path);
 
 class TrailerProcessor {
 
-    static var $m_max_run = 100;
-    static var $m_max_errors = 5;
+    private static $s_table_name = 'trailers';
+
+    private static $s_max_run = 100;
+    //private static $s_max_run = 2;
+    private static $s_max_errors = 5;
+
+    private static $s_dir_mode = 0755;
 
     public function trailerDbExists($p_dbPath)
     {
-        $path_mode = 0755;
+        $path_mode = self::$s_dir_mode;
 
         $table_name = 'trailers';
 
@@ -67,36 +72,86 @@ class TrailerProcessor {
     }
 
 
-    public function downloadOneTrailer($p_moviesDatabase, $p_saveDir, $p_extension = null)
+    public function downloadOneTrailer($p_moviesDatabase, $p_localDir)
     {
         $sqlite_name = $p_moviesDatabase;
-        $table_name = 'trailers';
-        $max_error_count = 3;
+        $table_name = self::$s_table_name;
+        //$max_error_count = $s_max_errors;
 
-        $queryStr_sel = 'SELECT movie_key, source_url, error_count FROM ' . $table_name . ' WHERE state = "to_download" AND error_count < ' . $max_error_count . ' ORDER BY movie_key LIMIT 1';
-        $queryStr_upd = 'UPDATE ' . $table_name . ' SET local_name = :local_name, state = "to_upload" WHERE movie_key = :movie_key';
+        $queryStr_sel = 'SELECT movie_key, source_url, source_timestamp, error_count FROM ' . $table_name . ' WHERE state = "to_download" ';
+        if (0 < self::$s_max_errors) {
+            $queryStr_sel .= 'AND error_count <= ' . self::$s_max_errors . ' ';
+        }
+        $queryStr_sel .= 'ORDER BY movie_key LIMIT 1';
+
+        $queryStr_upd = 'UPDATE ' . $table_name . ' SET local_name = :local_name, state = "to_upload", error_count = 0 WHERE movie_key = :movie_key';
         $queryStr_err = 'UPDATE ' . $table_name . ' SET error_count = :error_count WHERE movie_key = :movie_key';
 
-
         $movie_key = null;
-        $trailer_url = null;
+        $source_url = '';
+        $source_timestamp = '';
+        $error_count = 0;
+        $local_name = '';
+        $video_suffix = '';
 
+        @$db = new PDO ('sqlite:' . $sqlite_name);
         $stmt = $db->prepare($queryStr_sel);
-        ;
+        $res = $stmt->execute();
+        if ($res) {
+            $res = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($res) {
+                $movie_key = '' . $res['movie_key'];
+                $source_url = trim('' . $res['source_url']);
+                $source_timestamp = 0 + $res['source_timestamp'];
+                $error_count = 0 + $res['error_count'];
+            }
+        }
 
-        $file_store = $p_saveDir . DIRECTORY_SEPARATOR . $movie_key; // . '-' . $timestamp;
+        if (empty($movie_key) || empty($source_url)) {
+            return false;
+        }
+
+        $max_suffix_len = 10;
+        $other_suffixes = array('php', 'js', 'jsp', 'html', 'htm', 'css', 'txt', 'json', 'xml', 'rss');
+        $source_url_arr = explode('.', $source_url);
+        if (1 < count($source_url_arr)) {
+            $source_url_end = trim(strtolower($source_url_arr[count($source_url_arr) - 1]));
+            if ((0 < strlen($source_url_end)) && (strlen($source_url_end) <= $max_suffix_len)) {
+                if (!in_array($source_url_end, $other_suffixes)) {
+                    $video_suffix = '.' . $source_url_end;
+                }
+            }
+        }
+
+        $source_timedate = gmdate('Y-m-d_H-i-s', $source_timestamp);
+        $local_name = $movie_key . '_' . $source_timedate . $video_suffix;
+
+        $file_store_path = $p_localDir . DIRECTORY_SEPARATOR . $local_name;
 
         try {
-            file_put_contents($file_store, file_get_contents($trailer_url));
+            file_put_contents($file_store_path, file_get_contents($source_url));
         }
         catch (Exception $exc) {
-            ;
+            $error_count += 1;
+            $stmt = $db->prepare($queryStr_err);
+
+            $stmt->bindParam(':movie_key', $movie_key, PDO::PARAM_STR);
+            $stmt->bindParam(':error_count', $error_count, PDO::PARAM_INT);
+
+            $res = $stmt->execute();
+
+            return false;
         }
 
+        $stmt = $db->prepare($queryStr_upd);
 
+        $stmt->bindParam(':movie_key', $movie_key, PDO::PARAM_STR);
+        $stmt->bindParam(':local_name', $local_name, PDO::PARAM_STR);
 
+        $res = $stmt->execute();
+
+        return true;
     }
-
 
 /*
     public function downloadAllTrailers($p_moviesDatabase, $p_saveDir)
@@ -115,24 +170,27 @@ class TrailerProcessor {
 */
 
 
-    public function uploadOneTrailer($p_dbPath, $p_videoDir)
+    public function uploadOneTrailer($p_moviesDatabase, $p_localDir, $p_chunkDir, $p_vimeoAccess)
     {
-        $vimeo_id = null;
+        $sqlite_name = $p_moviesDatabase;
+        $table_name = self::$s_table_name;
 
-        $table_name = 'videos';
+        $movie_key = null;
+        $local_name = '';
+        $vimeo_id = '';
+        $error_count = 0;
 
-        $row_id = 0;
-        $video_path = '';
-
-        $queryStr_sel = 'SELECT id, input_name FROM ' . $table_name . ' WHERE vimeo_id = "" LIMIT 1';
-        $queryStr_upd = 'UPDATE ' . $table_name . ' SET vimeo_id = :vimeo_id, to_upload = 0 WHERE id = :id';
-
-        if (!videoDbExists($p_dbPath)) {
-            return false;
+        $queryStr_sel = 'SELECT movie_key, local_name, vimeo_id, error_count FROM ' . $table_name . ' WHERE state = "to_upload" ';
+        if (0 < self::$s_max_errors) {
+            $queryStr_sel .= 'AND error_count <= ' . self::$s_max_errors . ' ';
         }
+        $queryStr_sel .= 'ORDER BY movie_key LIMIT 1';
+
+        $queryStr_upd = 'UPDATE ' . $table_name . ' SET vimeo_id = :vimeo_id, state = "to_use", error_count = 0 WHERE movie_key = :movie_key';
+        $queryStr_err = 'UPDATE ' . $table_name . ' SET error_count = :error_count WHERE movie_key = :movie_key';
 
         // take the info from db, with $queryStr_sel
-        @$db = new PDO ('sqlite:' . $p_dbPath);
+        @$db = new PDO ('sqlite:' . $sqlite_name);
         $stmt = $db->prepare($queryStr_sel);
         $res = $stmt->execute();
         if (!$res) {
@@ -142,31 +200,49 @@ class TrailerProcessor {
         if (empty($res)) {
             return false;
         }
-        $row_id = $res['id'];
-        $video_name = $res['input_name'];
+        $movie_key = '' . $res['movie_key'];
+        $local_name = '' . $res['local_name'];
+        $vimeo_id = '' . $res['vimeo_id'];
+        $error_count = 0 + $res['error_count'];
 
-        if (empty($video_name)) {
+        if (empty($movie_key) || empty($local_name)) {
             return false;
         }
 
-        $video_path = $p_videoDir . DIRECTORY_SEPARATOR . $video_name;
-        $vimeo = new Vimeo;
+        $consumer_key = $p_vimeoAccess['key'];
+        $consumer_secret = $p_vimeoAccess['secret'];
 
+        $file_local_path = $p_localDir . DIRECTORY_SEPARATOR . $local_name;
+        $vimeo_obj = new phpVimeo($consumer_key, $consumer_secret);
+
+        $replace_id = null;
+        if (!empty($vimeo_id)) {
+            $replace_id = 0 + $vimeo_id;
+        }
         try {
-            $vimeo_id = $vimeo->upload();
+            $vimeo_id = $vimeo_obj->upload($file_local_path, true, $p_chunkDir, 2097152, $replace_id);
         }
         catch (Exception $exc) {
+            $error_count += 1;
+            $stmt = $db->prepare($queryStr_err);
+
+            $stmt->bindParam(':movie_key', $movie_key, PDO::PARAM_STR);
+            $stmt->bindParam(':error_count', $error_count, PDO::PARAM_INT);
+
+            $res = $stmt->execute();
+
             return false;
         }
 
         if (empty($vimeo_id)) {
             return false;
         }
+        $vimeo_id = '' . $vimeo_id;
 
         // put the vimeo_id into db, with $queryStr_upd
         //$db->beginTransaction();
         $stmt = $db->prepare($queryStr_upd);
-        $stmt->bindParam(':id', $row_id, PDO::PARAM_STR);
+        $stmt->bindParam(':movie_key', $movie_key, PDO::PARAM_STR);
         $stmt->bindParam(':vimeo_id', $vimeo_id, PDO::PARAM_STR);
         $res = $stmt->execute();
         if (!$res) {
@@ -191,7 +267,7 @@ class TrailerProcessor {
 */
 
     public function someLeft($p_moviesDatabase, $p_mode) {
-        //return true;
+
         $known_modes = array('download' => 'to_download', 'upload' => 'to_upload');
         if (!array_key_exists($p_mode, $known_modes)) {
             return false;
@@ -202,9 +278,11 @@ class TrailerProcessor {
         $sqlite_name = $p_moviesDatabase;
 
         $sel_req = 'SELECT count(*) AS count_left FROM ' . $table_name . ' WHERE state = "' . $mode_state . '"';
-        if (0 < self::$m_max_errors) {
-            $sel_req .= ' AND error_count < ' . self::$m_max_errors . '';
+        if (0 < self::$s_max_errors) {
+            $sel_req .= ' AND error_count <= ' . self::$s_max_errors . '';
         }
+
+        $count_left = 0;
 
         @$db = new PDO ('sqlite:' . $sqlite_name);
         $stmt = $db->prepare($sel_req);
@@ -214,14 +292,34 @@ class TrailerProcessor {
             if (!$res) {
                 return false;
             }
-            $movie_key_old = $res['count_left'];
-            ;
+            $count_left = $res['count_left'];
         }
 
+        if (empty($count_left)) {
+            return false;
+        }
 
         return true;
     }
 
+    public function getVimeoAccess()
+    {
+        require_once($GLOBALS['g_campsiteDir'].DIRECTORY_SEPARATOR.'classes'.DIRECTORY_SEPARATOR.'SystemPref.php');
+
+        $vimeo_access_info = array('key' => '', 'secret' => '');
+
+        $vimeo_access_key = SystemPref::Get('NewsImportVimeoAccessKey');
+        $vimeo_access_secret = SystemPref::Get('NewsImportVimeoAccessSecret');
+
+        if (!empty($vimeo_access_key)) {
+            $vimeo_access_info['key'] = trim('' . $vimeo_access_key);
+        }
+        if (!empty($vimeo_access_secret)) {
+            $vimeo_access_info['secret'] = trim('' . $vimeo_access_secret);
+        }
+
+        return $vimeo_access_info;
+    }
 
     public static function AskForTrailers()
     {
@@ -229,18 +327,33 @@ class TrailerProcessor {
 
         $incl_dir = dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'include';
         $defspool_path = $incl_dir . DIRECTORY_SEPARATOR . 'default_spool.php';
-        require_once($defspool_path);
+        require($defspool_path);
         // $newsimport_default_cache;
 
         $cache_dir = NewsImportEnv::AbsolutePath($newsimport_default_cache, true);
 
         $local_trailer_dir = $cache_dir . 'trailers';
         $trailres_db_path = $cache_dir . 'movies_info.sqlite';
+        $local_chunk_dir = $cache_dir . 'trailers' . DIRECTORY_SEPARATOR . 'chunks';
 
-        $max_run = self::$m_max_run;
+        $max_run = self::$s_max_run;
 
         $trail_proc = new TrailerProcessor();
         $trail_proc->trailerDbExists($trailres_db_path);
+
+        $vimeo_access_info = $trail_proc->getVimeoAccess();
+
+        $dir_mode = self::$s_dir_mode;
+        try {
+            mkdir($local_trailer_dir, $dir_mode, true);
+        }
+        catch (Exception $exc) {
+        }
+        try {
+            mkdir($local_chunk_dir, $dir_mode, true);
+        }
+        catch (Exception $exc) {
+        }
 
         $cur_run = 0;
         while (true) {
@@ -256,6 +369,10 @@ class TrailerProcessor {
 
         }
 
+        if (empty($vimeo_access_info['key']) || empty($vimeo_access_info['secret'])) {
+            return;
+        }
+
         $cur_run = 0;
         while (true) {
             $cur_run += 1;
@@ -263,7 +380,7 @@ class TrailerProcessor {
                 break;
             }
 
-            $trail_proc->uploadOneTrailer($trailres_db_path, $local_trailer_dir);
+            $trail_proc->uploadOneTrailer($trailres_db_path, $local_trailer_dir, $local_chunk_dir, $vimeo_access_info);
             if (!$trail_proc->someLeft($trailres_db_path, 'upload')) {
                 break;
             }
