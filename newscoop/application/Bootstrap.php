@@ -287,4 +287,14 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
         $storage = new Zend_Auth_Storage_Session('Zend_Auth_Storage');
         Zend_Auth::getInstance()->setStorage($storage);
     }
+
+    /**
+     */
+    protected function _initLog()
+    {
+        $writer = new Zend_Log_Writer_Syslog(array('application' => 'Newscoop'));
+        $log = new Zend_Log($writer);
+        \Zend_Registry::set('log', $log);
+        return $log;
+    }
 }
