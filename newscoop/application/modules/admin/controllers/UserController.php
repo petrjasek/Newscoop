@@ -136,8 +136,12 @@ class Admin_UserController extends Zend_Controller_Action
         $form->user_type->setMultioptions($this->userTypeService->getOptions());
         $form->author->setMultioptions(array('' => getGS('None')) + $this->_helper->service('author')->getOptions());
 
-        $user = $this->getUser();
-        $form->setDefaultsFromEntity($user);
+        try {
+            $user = $this->getUser();
+            $form->setDefaultsFromEntity($user);
+        } catch (\Doctrine\ORM\EntityNotFoundException $e) { // deleted author
+            $user->setAuthor(null);
+        }
 
         $request = $this->getRequest();
         if ($request->isPost() && $form->isValid($request->getPost())) {

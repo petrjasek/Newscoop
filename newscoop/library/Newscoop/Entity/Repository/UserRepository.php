@@ -173,13 +173,14 @@ class UserRepository extends EntityRepository
         }
 
         $qb->from('Newscoop\Entity\User', 'u')
-            ->leftJoin('u.groups', 'g', Expr\Join::WITH, 'g.id = ' . $blogRoleId);
+            ->leftJoin('u.groups', 'g', Expr\Join::WITH, 'g.id = ' . $blogRoleId)
+            ->leftJoin('u.author', 'a');
 
         $qb->where($qb->expr()->eq("u.status", User::STATUS_ACTIVE));
         $qb->andWhere($qb->expr()->eq("u.is_public", true));
 
         $editorsFilter = $qb->expr()->orX();
-        $editorsFilter->add($qb->expr()->isNull('u.author'));
+        $editorsFilter->add($qb->expr()->isNull('a.id'));
         $editorsFilter->add($qb->expr()->isNotNull('g.id'));
         $qb->andWhere($editorsFilter);
 
@@ -274,9 +275,10 @@ class UserRepository extends EntityRepository
     {
         $query = $this->createQueryBuilder('u')
             ->leftJoin('u.groups', 'g', Expr\Join::WITH, 'g.id = ' . $blogRole)
+            ->innerJoin('u.author', 'a')
             ->where('u.is_admin = :admin')
             ->andWhere('u.status = :status')
-            ->andWhere('u.author IS NOT NULL')
+            ->andWhere('a.id IS NOT NULL')
             ->andWhere('g.id IS NULL')
             ->orderBy('u.username', 'asc')
             ->setFirstResult($offset)

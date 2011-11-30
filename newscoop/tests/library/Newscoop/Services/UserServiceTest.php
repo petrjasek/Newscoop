@@ -468,11 +468,62 @@ class UserServiceTest extends \RepositoryTestCase
     }
 
     /**
+     * @ticket CS-3911
+     */
+    public function testGetActiveUsersAfterRemovingRelatedAuthor()
+    {
+        $author = new Author('foo', 'bar');
+        $this->em->persist($author);
+        $this->em->flush();
+
+        $user = $this->addUser('foo');
+        $user->setAdmin(true);
+        $user->setAuthor($author);
+        $this->em->flush();
+
+        $users = $this->service->getActiveUsers();
+        $this->assertEmpty($users);
+
+        $this->em->remove($author);
+        $this->em->flush();
+
+        $users = $this->service->getActiveUsers();
+        $this->assertEquals(1, count($users));
+    }
+
+    /**
+     * @ticket CS-3911
+     */
+    public function testGetEditorsAfterRemovingRelatedAuthor()
+    {
+        $author = new Author('foo', 'bar');
+        $this->em->persist($author);
+        $this->em->flush();
+
+        $user = $this->addUser('foo');
+        $user->setAdmin(true);
+        $user->setAuthor($author);
+        $this->em->flush();
+
+        $editors = $this->service->findEditors();
+        $this->assertEquals(1, count($editors));
+
+        $this->em->remove($author);
+        $this->em->flush();
+
+        $this->assertNull($user->getAuthorId());
+
+        $editors = $this->service->findEditors();
+        $this->assertEmpty($editors);
+    }
+
+    /**
      * Add user to repository
      *
      * @param string $name
      * @param int $status
      * @param bool $isPublic
+     * @param bool $isAdmin
      * @return Newscoop\Entity\User
      */
     private function addUser($name, $status = User::STATUS_ACTIVE, $isPublic = true)
