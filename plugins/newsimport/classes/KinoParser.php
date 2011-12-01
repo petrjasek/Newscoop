@@ -130,7 +130,10 @@ class KinoData_Parser {
         if ( isset($p_env['cache_dir']) && (!empty($p_env['cache_dir'])) ) {
             $movies_dir = $p_env['cache_dir'];
         }
-        $sqlite_name = $movies_dir . 'movies_info.sqlite';
+        $sqlite_names = array(
+            'movies' => $movies_dir . 'movies_info.sqlite',
+            'trailers' => $movies_dir . 'trailers_info.sqlite',
+        );
 
         // first copy and use movies files, if any
         // this is an addition wrt the general event import
@@ -252,7 +255,7 @@ class KinoData_Parser {
             }
 
             // process_movies_files;
-            $parser->updateMoviesInfo($sqlite_name, $movies_infos_files, $movies_genres_files, $movies_links_files);
+            $parser->updateMoviesInfo($sqlite_names, $movies_infos_files, $movies_genres_files, $movies_links_files);
 
         }
 
@@ -311,7 +314,7 @@ class KinoData_Parser {
                 $cat_limits = $p_limits['categories'];
             }
 
-            $event_load = $parser->prepareKinosEvents($programs_infos_files, $sqlite_name, $this->m_provider, $p_categories, $lim_span_past, $lim_span_next, $cat_limits);
+            $event_load = $parser->prepareKinosEvents($programs_infos_files, $sqlite_names['movies'], $this->m_provider, $p_categories, $lim_span_past, $lim_span_next, $cat_limits);
 
             if (!empty($event_load)) {
                 $event_all = $event_load['events_all'];
@@ -878,10 +881,10 @@ class KinoData_Parser_SimpleXML {
     /**
      * 
      */
-    private function updateTrailersInfo($p_moviesDatabase, &$p_moviesInfo)
+    private function updateTrailersInfo($p_trailersDatabase, &$p_moviesInfo)
     {
 
-        $sqlite_name = $p_moviesDatabase;
+        $sqlite_name = $p_trailersDatabase;
         $table_name = 'trailers';
 
         $to_update = array();
@@ -1076,13 +1079,13 @@ class KinoData_Parser_SimpleXML {
      * @param array $p_moviesLinksFiles
      * @return bool
      */
-    public function updateMoviesInfo($p_moviesDatabase, $p_moviesInfosFiles, $p_moviesGenresFiles, $p_moviesLinksFiles)
+    public function updateMoviesInfo($p_moviesDatabases, $p_moviesInfosFiles, $p_moviesGenresFiles, $p_moviesLinksFiles)
     {
         $movies_info = $this->parseMoviesInfo($p_moviesInfosFiles, $p_moviesGenresFiles, $p_moviesLinksFiles);
 
-        $this->updateTrailersInfo($p_moviesDatabase, $movies_info);
+        $this->updateTrailersInfo($p_moviesDatabases['trailers'], $movies_info);
 
-        $sqlite_name = $p_moviesDatabase;
+        $sqlite_name = $p_moviesDatabases['movies'];
         $table_name = $this->m_table_name;
 
         ksort($movies_info);

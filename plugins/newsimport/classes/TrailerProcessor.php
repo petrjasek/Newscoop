@@ -36,7 +36,7 @@ class TrailerProcessor {
     {
         $path_mode = self::$s_dir_mode;
 
-        $table_name = 'trailers';
+        $table_name = self::$s_table_name;
 
         $db_dir = dirname($p_dbPath);
         if (!is_dir($db_dir)) {
@@ -274,7 +274,7 @@ class TrailerProcessor {
         }
         $mode_state = $known_modes[$p_mode];
 
-        $table_name = 'trailers';
+        $table_name = self::$s_table_name;
         $sqlite_name = $p_moviesDatabase;
 
         $sel_req = 'SELECT count(*) AS count_left FROM ' . $table_name . ' WHERE state = "' . $mode_state . '"';
@@ -333,7 +333,8 @@ class TrailerProcessor {
         $cache_dir = NewsImportEnv::AbsolutePath($newsimport_default_cache, true);
 
         $local_trailer_dir = $cache_dir . 'trailers';
-        $trailres_db_path = $cache_dir . 'movies_info.sqlite';
+        //$trailres_db_path = $cache_dir . 'movies_info.sqlite';
+        $trailres_db_path = $cache_dir . 'trailers_info.sqlite';
         $local_chunk_dir = $cache_dir . 'trailers' . DIRECTORY_SEPARATOR . 'chunks';
 
         $max_run = self::$s_max_run;
