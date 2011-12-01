@@ -65,12 +65,34 @@ class SwissinfoParser implements Parser
 
         $main_section = $this->story->xpath('./property[3]');
         $main_section_content = $main_section[0]->xpath('.//content[@type="TextBlock"]/property[1]/value/string');
-        //$main_section_titles = $main_section[0]->xpath('.//content[@type="TextBlock"]/property[2]/value/string');
+        $main_section_titles = $main_section[0]->xpath('.//content[@type="TextBlock"]/property[2]');
 
+        $main_titles = array();
+        foreach ($main_section_titles as $title) {
+            $key = (string) array_shift($title->xpath('.//key'));
+            if ($key == "title") {
+                $value = (string) array_shift($title->xpath('.//value/string'));
+                $main_titles[] = $value;
+            }
+            else {
+                //maybe they have something weird there...
+                $main_titles[] = null;
+            }
+        }
+
+        $i = 0;
         foreach($main_section_content as $section) {
+            $title = $main_titles[$i];
+            if (isset($title)) {
+                $content[]= '<br><b>';
+                $content[]= $title;
+                $content[]= '</b></br>';
+            }
             $content[]= '<p>';
             $content[]= (string) $section;
             $content[]= '</p>';
+
+            $i = $i + 1;
         }
 
         $content[]= '<p class="swiss-info-free">';
