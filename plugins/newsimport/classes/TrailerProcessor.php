@@ -209,20 +209,29 @@ class TrailerProcessor {
             return false;
         }
 
-        $consumer_key = $p_vimeoAccess['key'];
-        $consumer_secret = $p_vimeoAccess['secret'];
+        $consumer_key = $p_vimeoAccess['consumer_key'];
+        $consumer_secret = $p_vimeoAccess['consumer_secret'];
+        $access_token = $p_vimeoAccess['access_token'];
+        $access_token_secret = $p_vimeoAccess['access_token_secret'];
 
         $file_local_path = $p_localDir . DIRECTORY_SEPARATOR . $local_name;
-        $vimeo_obj = new phpVimeo($consumer_key, $consumer_secret);
+        $vimeo_obj = new phpVimeo($consumer_key, $consumer_secret, $access_token, $access_token_secret);
+
 
         $replace_id = null;
         if (!empty($vimeo_id)) {
             $replace_id = 0 + $vimeo_id;
         }
         try {
-            $vimeo_id = $vimeo_obj->upload($file_local_path, true, $p_chunkDir, 2097152, $replace_id);
+            //$vimeo_id = $vimeo_obj->upload($file_local_path, true, $p_chunkDir, 2097152, $replace_id);
+            $vimeo_id = $vimeo_obj->upload($file_local_path);
         }
         catch (Exception $exc) {
+//echo "\n";
+//echo "exception:\n";
+//var_dump($exc);
+//echo "\n";
+
             $error_count += 1;
             $stmt = $db->prepare($queryStr_err);
 
@@ -237,6 +246,9 @@ class TrailerProcessor {
         if (empty($vimeo_id)) {
             return false;
         }
+
+        $vimeo_obj->call('vimeo.videos.setTitle', array('title' => $movie_key, 'video_id' => $vimeo_id));
+
         $vimeo_id = '' . $vimeo_id;
 
         // put the vimeo_id into db, with $queryStr_upd
@@ -304,21 +316,71 @@ class TrailerProcessor {
 
     public function getVimeoAccess()
     {
-        require_once($GLOBALS['g_campsiteDir'].DIRECTORY_SEPARATOR.'classes'.DIRECTORY_SEPARATOR.'SystemPref.php');
 
-        $vimeo_access_info = array('key' => '', 'secret' => '');
+
+        $vimeo_access_info = array(
+            'consumer_key' => '',
+            'consumer_secret' => '',
+            'access_token' => '',
+            'access_token_secret' => '',
+        );
+
+        require_once($GLOBALS['g_campsiteDir'].DIRECTORY_SEPARATOR.'classes'.DIRECTORY_SEPARATOR.'SystemPref.php');
 
         $vimeo_access_key = SystemPref::Get('NewsImportVimeoAccessKey');
         $vimeo_access_secret = SystemPref::Get('NewsImportVimeoAccessSecret');
 
         if (!empty($vimeo_access_key)) {
-            $vimeo_access_info['key'] = trim('' . $vimeo_access_key);
+            $vimeo_access_info['consumer_key'] = trim('' . $vimeo_access_key);
         }
         if (!empty($vimeo_access_secret)) {
-            $vimeo_access_info['secret'] = trim('' . $vimeo_access_secret);
+            $vimeo_access_info['consumer_secret'] = trim('' . $vimeo_access_secret);
+        }
+
+        $vimeo_access_token = SystemPref::Get('NewsImportVimeoAccessToken');
+        $vimeo_access_token_secret = SystemPref::Get('NewsImportVimeoAccessTokenSecret');
+
+        if (!empty($vimeo_access_token)) {
+            $vimeo_access_info['access_token'] = trim('' . $vimeo_access_token);
+        }
+        if (!empty($vimeo_access_token_secret)) {
+            $vimeo_access_info['access_token_secret'] = trim('' . $vimeo_access_token_secret);
         }
 
         return $vimeo_access_info;
+
+
+
+/*
+    The code below is just for taking an access token, if the current one expired
+*/
+
+        $vimeo_obj = new phpVimeo($vimeo_access_key, $vimeo_access_secret);
+
+        $request_token = array('oauth_token' => '', 'oauth_token_secret' => '');
+        $request_token = $vimeo_obj->getRequestToken();
+//echo "request token:\n";
+//var_dump($request_token);
+//echo "\n";
+
+        $vimeo_obj->setToken($request_token['oauth_token'], $request_token['oauth_token_secret']);
+        $auth_url = $vimeo_obj->getAuthorizeUrl($request_token['oauth_token'], 'write');
+/*
+echo "\n";
+echo "AUTH URL:\n";
+var_dump($auth_url);
+echo "\n";
+exit(1);
+*/
+        $verifier = '';
+        $access_token = $vimeo_obj->getAccessToken($verifier);
+/*
+echo "access token:\n";
+var_dump($access_token);
+echo "\n";
+exit(1);
+*/
+
     }
 
     public static function AskForTrailers()
@@ -358,6 +420,7 @@ class TrailerProcessor {
 
         $cur_run = 0;
         while (true) {
+            //break;
             $cur_run += 1;
             if ($cur_run > $max_run) {
                 break;
@@ -370,7 +433,10 @@ class TrailerProcessor {
 
         }
 
-        if (empty($vimeo_access_info['key']) || empty($vimeo_access_info['secret'])) {
+        if (empty($vimeo_access_info['consumer_key']) || empty($vimeo_access_info['consumer_secret'])) {
+            return;
+        }
+        if (empty($vimeo_access_info['access_token']) || empty($vimeo_access_info['access_token_secret'])) {
             return;
         }
 
