@@ -80,7 +80,6 @@ class DashboardController extends Zend_Controller_Action
         
         $this->view->subscriptionService = true;
         
-        /*
         try {
             $userSubscriptionService->testConnection();
         }
@@ -88,7 +87,6 @@ class DashboardController extends Zend_Controller_Action
             $this->view->subscriptionService = false;
             restore_error_handler();
         }
-        */
         
         if ($this->view->subscriptionService == true) {
             $this->view->subscriber = $this->user->getSubscriber();
