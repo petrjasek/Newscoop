@@ -94,10 +94,6 @@ class ArticlePopularityRepository extends EntityRepository
             ->findOneBy(array('language' => $entity->getLanguageId(), 'number' => $entity->getArticleId(),
         )); 
 
-        if (is_null($article)) {
-            $article = new Article;
-        }
-
         return $article;
     }
 
