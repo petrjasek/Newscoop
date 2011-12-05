@@ -50,11 +50,8 @@ class PublisherServiceTest extends \RepositoryTestCase
             $oldArticle->delete();
         }
 
-        $feed = new Feed('feed_title');
         $entry = Entry::create(new NewsMlParser(APPLICATION_PATH . NewsMlParserTest::NEWSML));
-        $feed->addEntry($entry);
-
-        $this->em->persist($feed);
+        $entry->setFeed($this->feed);
         $this->em->persist($entry);
         $this->em->flush();
 
@@ -77,7 +74,7 @@ class PublisherServiceTest extends \RepositoryTestCase
 
         $this->checkData($article, $entry);
         $this->checkImages(1, $article);
-        $this->checkAuthors(2, $article, $feed);
+        $this->checkAuthors(2, $article, $this->feed);
 
         $article->delete();
     }
@@ -87,8 +84,6 @@ class PublisherServiceTest extends \RepositoryTestCase
         $updated = new \DateTime(NewsMlParserTest::UPDATED);
         $created = new \DateTime(NewsMlParserTest::CREATED);
 
-        $feed = new Feed('feed_title');
-
         $entry = $this->getEntry(array(
             'getTitle' => uniqid(),
             'getContent' => 'hello',
@@ -96,11 +91,7 @@ class PublisherServiceTest extends \RepositoryTestCase
             'getSubject' => self::SECTION_SPORT,
             'getCreated' => $created,
         ));
-        $this->feed->addEntry($entry);
-
-        $feed->addEntry($entry);
-
-        $this->em->persist($feed);
+        $entry->setFeed($this->feed);
         $this->em->persist($entry);
         $this->em->flush();
 
@@ -120,12 +111,12 @@ class PublisherServiceTest extends \RepositoryTestCase
 
         $this->checkData($next, $entry);
         $this->checkImages(1, $next);
-        $this->checkAuthors(2, $next, $feed);
+        $this->checkAuthors(2, $next, $this->feed);
 
         // test replacing images/authors
         $next = $this->service->update($entry);
         $this->checkImages(1, $next);
-        $this->checkAuthors(2, $next, $feed);
+        $this->checkAuthors(2, $next, $this->feed);
 
         $next->delete();
     }
@@ -195,19 +186,13 @@ class PublisherServiceTest extends \RepositoryTestCase
 
     public function testDelete()
     {
-        $feed = new Feed('feed_title');
-
         $entry = $this->getEntry(array(
             'getTitle' => uniqid(),
             'getContent' => 'hello',
             'getLanguage' => 'en',
             'getSubject' => self::SECTION_SPORT,
         ));
-        $this->feed->addEntry($entry);
-
-        $feed->addEntry($entry);
-
-        $this->em->persist($feed);
+        $entry->setFeed($this->feed);
         $this->em->persist($entry);
         $this->em->flush();
 
@@ -220,19 +205,13 @@ class PublisherServiceTest extends \RepositoryTestCase
 
     public function testPublishSectionSport()
     {
-        $feed = new Feed('feed_title');
-
         $entry = $this->getEntry(array(
             'getTitle' => uniqid(),
             'getContent' => 'hello',
             'getLanguage' => 'de',
             'getSubject' => self::SECTION_SPORT,
         ));
-        $this->feed->addEntry($entry);
-
-        $feed->addEntry($entry);
-
-        $this->em->persist($feed);
+        $entry->setFeed($this->feed);
         $this->em->persist($entry);
         $this->em->flush();
 
@@ -242,19 +221,13 @@ class PublisherServiceTest extends \RepositoryTestCase
 
     public function testPublishSectionCulture()
     {
-        $feed = new Feed('feed_title');
-
         $entry = $this->getEntry(array(
             'getTitle' => uniqid(),
             'getContent' => 'hello',
             'getLanguage' => 'de',
             'getSubject' => self::SECTION_CULTURE,
         ));
-        $this->feed->addEntry($entry);
-
-        $feed->addEntry($entry);
-
-        $this->em->persist($feed);
+        $entry->setFeed($this->feed);
         $this->em->persist($entry);
         $this->em->flush();
 
@@ -264,8 +237,6 @@ class PublisherServiceTest extends \RepositoryTestCase
 
     public function testPublishSectionInternational()
     {
-        $feed = new Feed('feed_title');
-
         $entry = $this->getEntry(array(
             'getTitle' => uniqid(),
             'getContent' => 'hello',
@@ -273,11 +244,7 @@ class PublisherServiceTest extends \RepositoryTestCase
             'getSubject' => 1,
             'getCountry' => 'CZ',
         ));
-        $this->feed->addEntry($entry);
-
-        $feed->addEntry($entry);
-
-        $this->em->persist($feed);
+        $entry->setFeed($this->feed);
         $this->em->persist($entry);
         $this->em->flush();
 
@@ -287,8 +254,6 @@ class PublisherServiceTest extends \RepositoryTestCase
 
     public function testPublishSectionBasel()
     {
-        $feed = new Feed('feed_title');
-
         $entry = $this->getEntry(array(
             'getTitle' => uniqid(),
             'getContent' => 'hello',
@@ -297,11 +262,7 @@ class PublisherServiceTest extends \RepositoryTestCase
             'getCountry' => 'CH',
             'getProduct' => 'Regionaldienst Nord',
         ));
-        $this->feed->addEntry($entry);
-
-        $feed->addEntry($entry);
-
-        $this->em->persist($feed);
+        $entry->setFeed($this->feed);
         $this->em->persist($entry);
         $this->em->flush();
 
@@ -311,8 +272,6 @@ class PublisherServiceTest extends \RepositoryTestCase
 
     public function testPublishSectionOther()
     {
-        $feed = new Feed('feed_title');
-
         $entry = $this->getEntry(array(
             'getTitle' => uniqid(),
             'getContent' => 'hello',
@@ -321,11 +280,7 @@ class PublisherServiceTest extends \RepositoryTestCase
             'getCountry' => 'CH',
             'getProduct' => '',
         ));
-        $this->feed->addEntry($entry);
-
-        $feed->addEntry($entry);
-
-        $this->em->persist($feed);
+        $entry->setFeed($this->feed);
         $this->em->persist($entry);
         $this->em->flush();
 
@@ -336,8 +291,7 @@ class PublisherServiceTest extends \RepositoryTestCase
     public function testPublishProgram()
     {
         $entry = Entry::create(new NewsMlParser(APPLICATION_PATH . '/../tests/ingest/wochenprogramm_rdn201.xml'));
-
-        $this->feed->addEntry($entry);
+        $entry->setFeed($this->feed);
         $this->em->persist($entry);
         $this->em->flush();
 

@@ -58,12 +58,17 @@ class IngestServiceTest extends \RepositoryTestCase
     public function testFindBy()
     {
         $feed = new Feed('title');
-        $feed->addEntry(new Entry('title', 'content'));
-        $feed->addEntry(new Entry('title2', 'content'));
+        $this->service->addFeed($feed);
 
-        $this->em->persist($feed);
+        $entry = new Entry('title', 'content');
+        $entry->setFeed($feed);
+        $this->em->persist($entry);
+
+        $entry = new Entry('title2', 'content');
+        $entry->setFeed($feed);
+        $this->em->persist($entry);
+
         $this->em->flush();
-        $this->em->clear();
 
         $entries = $this->service->findBy(array('feed' => $feed->getId()), array('updated' => 'desc'), 10, 0);
         $this->assertEquals(2, count($entries));
@@ -81,9 +86,11 @@ class IngestServiceTest extends \RepositoryTestCase
     public function testPublish()
     {
         $feed = new Feed('test');
+        $this->service->addFeed($feed);
+
         $entry = new Entry('title', 'content');
-        $feed->addEntry($entry);
-        $this->em->persist($feed);
+        $entry->setFeed($feed);
+        $this->em->persist($entry);
         $this->em->flush();
 
         $this->assertFalse($entry->isPublished());
@@ -99,9 +106,11 @@ class IngestServiceTest extends \RepositoryTestCase
     public function testPrepare()
     {
         $feed = new Feed('test');
+        $this->service->addFeed($feed);
+
         $entry = new Entry('title', 'content');
-        $feed->addEntry($entry);
-        $this->em->persist($feed);
+        $entry->setFeed($feed);
+        $this->em->persist($entry);
         $this->em->flush();
 
         $article = $this->service->publish($entry, 'N');
@@ -120,11 +129,12 @@ class IngestServiceTest extends \RepositoryTestCase
     {
         $feed = new Feed('SDA');
         $this->service->addFeed($feed);
-        $this->assertEquals(0, count($feed->getEntries()));
+
+        $this->assertEquals(0, count($this->service->findBy(array('feed' => $feed->getId()))));
 
         $this->service->updateSDA();
 
-        $this->assertEquals(7, count($feed->getEntries()));
+        $this->assertEquals(7, count($this->service->findBy(array('feed' => $feed->getId()))));
         $this->assertInstanceOf('DateTime', $feed->getUpdated());
     }
 
@@ -142,7 +152,7 @@ class IngestServiceTest extends \RepositoryTestCase
         $this->service->updateSDA();
         $this->service->updateSDA();
 
-        $this->assertEquals(7, count($feed->getEntries()));
+        $this->assertEquals(7, count($this->service->findBy(array('feed' => $feed->getId()))));
     }
 
     public function testUpdateAllTimeout()
@@ -153,7 +163,7 @@ class IngestServiceTest extends \RepositoryTestCase
         copy(APPLICATION_PATH . '/../tests/ingest/newsml1.xml', $tmpFile);
 
         $this->service->updateSDA();
-        $this->assertEquals(7, count($feed->getEntries()));
+        $this->assertEquals(7, count($this->service->findBy(array('feed' => $feed->getId()))));
     }
 
     public function testLiftEmbargoNew()
