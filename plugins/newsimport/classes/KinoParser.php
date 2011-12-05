@@ -883,6 +883,12 @@ class KinoData_Parser_SimpleXML {
      */
     private function updateTrailersInfo($p_trailersDatabase, &$p_moviesInfo)
     {
+        if (!file_exists($p_trailersDatabase)) {
+            $pre_db_file = dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'trailers_info.sqlite';
+            if (file_exists($pre_db_file)) {
+                copy($pre_db_file, $p_trailersDatabase);
+            }
+        }
 
         $sqlite_name = $p_trailersDatabase;
         $table_name = 'trailers';

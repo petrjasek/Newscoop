@@ -35,6 +35,13 @@ class TrailerProcessor {
 
     public function trailerDbExists($p_dbPath)
     {
+        if (!file_exists($p_dbPath)) {
+            $pre_db_file = dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'trailers_info.sqlite';
+            if (file_exists($pre_db_file)) {
+                copy($pre_db_file, $p_dbPath);
+            }
+        }
+
         $path_mode = self::$s_dir_mode;
 
         $table_name = self::$s_table_name;
