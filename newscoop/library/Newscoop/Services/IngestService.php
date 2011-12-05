@@ -148,7 +148,6 @@ class IngestService
         }
 
         $feed->setUpdated(new \DateTime());
-        $this->em->persist($feed);
         $this->em->flush();
     }
 
@@ -185,12 +184,10 @@ class IngestService
                             } else if ($feed->isAutoMode()) {
                                 $this->publish($entry);
                             }
-                            $this->em->persist($entry);
                             break;
 
                         case 'Delete':
                             $this->deletePublished($entry);
-                            $feed->removeEntry($entry);
                             $this->em->remove($entry);
                             break;
 
@@ -202,15 +199,12 @@ class IngestService
 
                 flock($handle, LOCK_UN);
                 fclose($handle);
-                $this->em->flush();
             } else {
                 continue;
             }
         }
 
         $feed->setUpdated(new \DateTime());
-        $this->em->persist($feed);
-
         $this->getEntryRepository()->liftEmbargo();
         $this->em->flush();
     }
@@ -231,7 +225,8 @@ class IngestService
 
         if (empty($previous)) {
             $previous = Entry::create($parser);
-            $feed->addEntry($previous);
+            $previous->setFeed($feed);
+            $this->em->persist($previous);
         }
 
         return $previous;
