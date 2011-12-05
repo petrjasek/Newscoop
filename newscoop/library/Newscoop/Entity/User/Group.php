@@ -42,10 +42,14 @@ class Group implements \Zend_Acl_Role_Interface
     private $users;
 
     /**
+     * @param string $name
      */
-    public function __construct()
+    public function __construct($name = null)
     {
         $this->users = new ArrayCollection;
+        if ($name !== null) {
+            $this->name = (string) $name;
+        }
     }
     
     /**

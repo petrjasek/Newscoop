@@ -158,33 +158,24 @@ class UserRepository extends EntityRepository
      * @param bool $countOnly
      * @param int $offset
      * @param int $limit
-     * @param int $blogRoleId
+     * @param array $editorRoles
      * @return array|int
      */
-    public function findActiveUsers($countOnly, $offset, $limit, $blogRoleId)
+    public function findActiveUsers($countOnly, $offset, $limit, array $editorRoles)
     {
-        $qb = $this->getEntityManager()->createQueryBuilder();
+        $expr = $this->getEntityManager()->getExpressionBuilder();
+        $qb = $this->createQueryBuilder('u');
 
         if ($countOnly) {
             $qb->select('COUNT(u.id)');
         }
-        else {
-            $qb->select('u');
-        }
 
-        $qb->from('Newscoop\Entity\User', 'u')
-            ->leftJoin('u.groups', 'g', Expr\Join::WITH, 'g.id = ' . $blogRoleId)
-            ->leftJoin('u.author', 'a');
+        $qb->leftJoin('u.groups', 'g', Expr\Join::WITH, $expr->in('g.id', $editorRoles))
+            ->where($qb->expr()->eq("u.status", User::STATUS_ACTIVE))
+            ->andWhere($qb->expr()->eq("u.is_public", true))
+            ->andWhere('g.id IS NULL');
 
-        $qb->where($qb->expr()->eq("u.status", User::STATUS_ACTIVE));
-        $qb->andWhere($qb->expr()->eq("u.is_public", true));
-
-        $editorsFilter = $qb->expr()->orX();
-        $editorsFilter->add($qb->expr()->isNull('a.id'));
-        $editorsFilter->add($qb->expr()->isNotNull('g.id'));
-        $qb->andWhere($editorsFilter);
-
-        if ($countOnly === false) {
+        if (!$countOnly) {
             $qb->orderBy('u.points', 'DESC');
             $qb->addOrderBy('u.id', 'ASC');
 
@@ -192,8 +183,7 @@ class UserRepository extends EntityRepository
             $qb->setMaxResults($limit);
 
             return $qb->getQuery()->getResult();
-        }
-        else {
+        } else {
             return $qb->getQuery()->getOneOrNullResult();
         }
     }
@@ -266,27 +256,25 @@ class UserRepository extends EntityRepository
     /**
      * Get editors
      *
-     * @param int $blogRole
+     * @param array $editorRoles
      * @param int $limit
      * @param int $offset
      * @return array
      */
-    public function findEditors($blogRole, $limit, $offset)
+    public function findEditors(array $editorRoles, $limit, $offset)
     {
+        $expr = $this->getEntityManager()->getExpressionBuilder();
         $query = $this->createQueryBuilder('u')
-            ->leftJoin('u.groups', 'g', Expr\Join::WITH, 'g.id = ' . $blogRole)
-            ->innerJoin('u.author', 'a')
-            ->where('u.is_admin = :admin')
+            ->innerJoin('u.groups', 'g', Expr\Join::WITH, $expr->in('g.id', $editorRoles))
             ->andWhere('u.status = :status')
-            ->andWhere('a.id IS NOT NULL')
-            ->andWhere('g.id IS NULL')
+            ->andWhere('u.is_public = :public')
             ->orderBy('u.username', 'asc')
             ->setFirstResult($offset)
             ->setMaxResults($limit)
             ->getQuery();
 
         $query->setParameters(array(
-            'admin' => 1,
+            'public' => 1,
             'status' => User::STATUS_ACTIVE,
         ));
 
@@ -296,24 +284,21 @@ class UserRepository extends EntityRepository
     /**
      * Get editors count
      *
-     * @param int $blogRole
+     * @param array $editorRoles
      * @return int
      */
-    public function getEditorsCount($blogRole)
+    public function getEditorsCount(array $editorRoles)
     {
-        $query = $this->getEntityManager()
-            ->createQueryBuilder()
+        $expr = $this->getEntityManager()->getExpressionBuilder();
+        $query = $this->createQueryBuilder('u')
             ->select('COUNT(u)')
-            ->from($this->getEntityName(), 'u')
-            ->leftJoin('u.groups', 'g', Expr\Join::WITH, 'g.id = ' . $blogRole)
-            ->where('u.is_admin = :admin')
+            ->innerJoin('u.groups', 'g', Expr\Join::WITH, $expr->in('g.id', $editorRoles))
             ->andWhere('u.status = :status')
-            ->andWhere('u.author IS NOT NULL')
-            ->andWhere('g.id IS NULL')
+            ->andWhere('u.is_public = :public')
             ->getQuery();
 
         $query->setParameters(array(
-            'admin' => 1,
+            'public' => 1,
             'status' => User::STATUS_ACTIVE,
         ));
 

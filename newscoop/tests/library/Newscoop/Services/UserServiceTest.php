@@ -39,9 +39,8 @@ class UserServiceTest extends \RepositoryTestCase
         $this->repository = $this->em->getRepository('Newscoop\Entity\User');
 
         $this->service = new UserService(array(
-            'blog' => array(
-                'role' => 1,
-            )), $this->em, $this->auth);
+            'editorRoles' => array(1),
+            ), $this->em, $this->auth);
 
         $this->user = new User();
         $this->user->setEmail('test@example.com');
@@ -274,62 +273,7 @@ class UserServiceTest extends \RepositoryTestCase
 
         $this->assertNotEquals($list1, $list2);
     }
-    
-    public function testGetEditors()
-    {
-        $blogRole = new Group();
-        $blogRole->setName('blogger');
 
-        $author1 = new Author('tic1', 'toc');
-        $author2 = new Author('tic2', 'toc');
-
-        $this->em->persist($blogRole);
-        $this->em->persist($author1);
-        $this->em->persist($author2);
-        $this->em->flush();
-
-        $user = new User();
-        $user->setUsername('user')
-            ->setEmail('user@example.com')
-            ->setActive(true);
-
-        $admin = new User();
-        $admin->setUsername('admin')
-            ->setEmail('admin@example.com')
-            ->setActive(true)
-            ->setAdmin(true);
-
-        $editor = new User();
-        $editor->setUsername('editor')
-            ->setEmail('editor@example.com')
-            ->setActive(true)
-            ->setAdmin(true)
-            ->setAuthor($author1);
-
-        $blogger = new User();
-        $blogger->setUsername('blogger')
-            ->setEmail('blogger@example.com')
-            ->setActive(true)
-            ->setAdmin(true)
-            ->setAuthor($author2)
-            ->addUserType($blogRole);
-
-        $this->em->persist($user);
-        $this->em->persist($admin);
-        $this->em->persist($editor);
-        $this->em->persist($blogger);
-        $this->em->flush();
-
-        $service = new UserService(array('blog' => array(
-            'role' => $blogRole->getId(),
-        )), $this->em, $this->auth);
-
-        $editors = $service->findEditors();
-        $this->assertEquals(1, count($editors));
-        $this->assertEquals($editor->getId(), $editors[0]->getId());
-        $this->assertEquals(1, $service->getEditorsCount());
-    }
-    
     public function testFindByUsernameStartsWith()
     {
         $em = $this->getMockBuilder('Doctrine\ORM\EntityManager')
@@ -427,94 +371,9 @@ class UserServiceTest extends \RepositoryTestCase
         $this->assertEquals('ä', $connection->fetchColumn("SELECT LOWER('Ä')"));
     }
 
-    public function testGetActiveUsers()
-    {
-        $this->addUser('active1');
-        $this->addUser('active2');
-        $this->addUser('nonpublic1', User::STATUS_ACTIVE, false);
-        $this->addUser('inactive1', User::STATUS_INACTIVE, true);
-        $this->addUser('inactive2', User::STATUS_DELETED, true);
-
-        $author = new Author('author1', 'last');
-        $this->em->persist($author);
-        $this->em->flush();
-
-        $user = $this->addUser('author1', User::STATUS_ACTIVE, true);
-        $user->setAuthor($author);
-        $this->em->flush();
-
-        $blogRole = new Group();
-        $blogRole->setName('blogger');
-        $this->em->persist($blogRole);
-
-        $author = new Author('author2', 'last');
-        $this->em->persist($author);
-
-        $this->em->flush();
-
-        $user = $this->addUser('blogger1', User::STATUS_ACTIVE, true);
-        $user->setAuthor($author);
-        $user->addUserType($blogRole);
-        $this->em->flush();
-
-        $users = $this->service->getActiveUsers();
-        $this->assertEquals(3, count($users));
-        $this->assertEquals(3, $this->service->getActiveUsers(true));
-    }
-
     public function testFindUsersBySearch()
     {
         $users = $this->service->findUsersBySearch('test');
-    }
-
-    /**
-     * @ticket CS-3911
-     */
-    public function testGetActiveUsersAfterRemovingRelatedAuthor()
-    {
-        $author = new Author('foo', 'bar');
-        $this->em->persist($author);
-        $this->em->flush();
-
-        $user = $this->addUser('foo');
-        $user->setAdmin(true);
-        $user->setAuthor($author);
-        $this->em->flush();
-
-        $users = $this->service->getActiveUsers();
-        $this->assertEmpty($users);
-
-        $this->em->remove($author);
-        $this->em->flush();
-
-        $users = $this->service->getActiveUsers();
-        $this->assertEquals(1, count($users));
-    }
-
-    /**
-     * @ticket CS-3911
-     */
-    public function testGetEditorsAfterRemovingRelatedAuthor()
-    {
-        $author = new Author('foo', 'bar');
-        $this->em->persist($author);
-        $this->em->flush();
-
-        $user = $this->addUser('foo');
-        $user->setAdmin(true);
-        $user->setAuthor($author);
-        $this->em->flush();
-
-        $editors = $this->service->findEditors();
-        $this->assertEquals(1, count($editors));
-
-        $this->em->remove($author);
-        $this->em->flush();
-
-        $this->assertNull($user->getAuthorId());
-
-        $editors = $this->service->findEditors();
-        $this->assertEmpty($editors);
     }
 
     /**

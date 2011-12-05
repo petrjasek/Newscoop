@@ -331,7 +331,7 @@ class UserService implements ObjectRepository
      */
     public function findEditors($limit = NULL, $offset = NULL)
     {
-        return $this->repository->findEditors($this->config['blog']['role'], $limit, $offset);
+        return $this->repository->findEditors($this->config['editorRoles'], $limit, $offset);
     }
 
     /**
@@ -341,7 +341,7 @@ class UserService implements ObjectRepository
      */
     public function getEditorsCount()
     {
-        return $this->repository->getEditorsCount($this->config['blog']['role']);
+        return $this->repository->getEditorsCount($this->config['editorRoles']);
     }
 
     /**
@@ -353,7 +353,7 @@ class UserService implements ObjectRepository
     {
         $offset = ($page-1) * $limit;
 
-        $result = $this->repository->findActiveUsers($countOnly, $offset, $limit, $this->config['blog']['role']);
+        $result = $this->repository->findActiveUsers($countOnly, $offset, $limit, $this->config['editorRoles']);
 
         if ($countOnly) {
             return $result[1];

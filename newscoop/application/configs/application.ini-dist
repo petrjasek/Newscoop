@@ -228,6 +228,11 @@ blog.article_type = "blog"
 ; prindesk resource
 printdesk.url = ""
 
+; will go to application.ini
+editorRoles[] = 2
+editorRoles[] = 3
+editorRoles[] = 4
+
 characterGroup.a = "a ä à â æ"
 characterGroup.c = "c ç"
 characterGroup.e = "e è é ê ë"
