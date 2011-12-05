@@ -36,9 +36,9 @@ class UserSubscriptionService
         );
         
         $urlList = array();
-        $urlList[] = 'https://abo.tageswoche.ch/dmpro/ws/subscriber/NMBA/0000000?userkey=0000000';
+        $urlList[] = 'https://abo.tageswoche.ch/dmpro/ws/subscriber/NMBA/0000001?userkey=0000001';
         $urlList[] = 'https://abo.tageswoche.ch/dmpro/ws/subscriber/NMBA?email=test@test.com&firstname=test&lastname=test';
-        $urlList[] = 'https://abo.tageswoche.ch/dmpro/ws/subscriber/NMBA/0000000';
+        $urlList[] = 'https://abo.tageswoche.ch/dmpro/ws/subscriber/NMBA/0000001';
         
         foreach ($urlList as $url) {
             $client = new \Zend_Http_Client();

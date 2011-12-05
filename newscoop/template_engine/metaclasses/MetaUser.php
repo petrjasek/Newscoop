@@ -163,7 +163,7 @@ final class MetaUser extends MetaDbObject implements ArrayAccess
      *
      * @return bool
      */
-    protected function isAdmin()
+    public function isAdmin()
     {
         return $this->m_dbObject->isAdmin() && !$this->isBlogger();
     }
@@ -307,7 +307,11 @@ final class MetaUser extends MetaDbObject implements ArrayAccess
      */
     public function isAuthor()
     {
-        return $this->m_dbObject->getAuthorId() && $this->isAdmin();
+        try {
+            return $this->m_dbObject->getAuthorId() && $this->isAdmin();
+        } catch (\Doctrine\ORM\EntityNotFoundException $e) {
+            return false;
+        }
     }
 
     /**
