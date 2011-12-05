@@ -188,7 +188,7 @@ class ArticlePopularityService
         $weekBefore = date('Y-m-d', strtotime('-7 days'));
         foreach($entries as $entry) {
             $article = $this->getRepository()->getArticle($entry);
-            if ($article->getPublishDate() < $weekBefore) {
+            if (is_null($article) || $article->getPublishDate() < $weekBefore) {
                 print "not processed\n";
                 continue;
             }
@@ -359,7 +359,7 @@ class ArticlePopularityService
     {
         $comments = 0;
         $article = $this->getRepository()->getArticle($entry);
-        if ($article->commentsEnabled()) {
+        if (!is_null($article) && $article->commentsEnabled()) {
             $commentsRepository = $this->em->getRepository('Newscoop\Entity\Comment');
             $filter = array( 'thread' => $entry->getArticleId(), 'language' => $entry->getLanguageId());
             $params = array( 'sFilter' => $filter);
