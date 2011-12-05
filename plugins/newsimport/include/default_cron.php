@@ -8,8 +8,8 @@ $newsimport_cron = array(
         'min' => '45',
     ),
     'trailers' => array(
-        'hour' => '1,23',
-        //'hour' => '1-23/2',
+        //'hour' => '1,23',
+        'hour' => '1-23/2',
         'min' => '20',
     )
 );

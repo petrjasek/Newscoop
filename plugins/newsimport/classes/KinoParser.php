@@ -1104,7 +1104,7 @@ class KinoData_Parser_SimpleXML {
         foreach ($movies_info as $mov_key => $mov_info) {
             $movies_to_preload[$mov_key] = true;
         }
-        $movies_preloaded = $this->loadMoviesByKeys($movies_to_preload, $p_moviesDatabase);
+        $movies_preloaded = $this->loadMoviesByKeys($movies_to_preload, $p_moviesDatabases['movies']);
         foreach ($movies_preloaded as $mov_key => $one_movie_data_pre) {
             if (isset($movies_info[$mov_key])) {
                 $mov_info = $movies_info[$mov_key];

@@ -886,7 +886,12 @@ class NewsImport
             $ev_map_id = Geo_Map::ReadMapId($art_number);
 
             // delete article (with map unlinking)
-            $event_art_rem->delete();
+            try {
+                $event_art_rem->delete();
+            }
+            catch (Exception $exc) {
+                //continue;
+            }
 
             // remove map
             if (!empty($ev_map_id)) {

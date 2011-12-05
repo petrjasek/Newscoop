@@ -26,7 +26,8 @@ class TrailerProcessor {
 
     private static $s_table_name = 'trailers';
 
-    private static $s_max_run = 100;
+    //private static $s_max_run = 100;
+    private static $s_max_run = 10;
     //private static $s_max_run = 2;
     private static $s_max_errors = 5;
 
@@ -179,13 +180,15 @@ class TrailerProcessor {
         $local_name = '';
         $vimeo_id = '';
         $error_count = 0;
+        $state = '';
 
-        $queryStr_sel = 'SELECT movie_key, local_name, vimeo_id, error_count FROM ' . $table_name . ' WHERE state = "to_upload" ';
+        $queryStr_sel = 'SELECT movie_key, local_name, vimeo_id, error_count, state FROM ' . $table_name . ' WHERE state IN ("to_upload", "to_title") ';
         if (0 < self::$s_max_errors) {
             $queryStr_sel .= 'AND error_count <= ' . self::$s_max_errors . ' ';
         }
         $queryStr_sel .= 'ORDER BY movie_key LIMIT 1';
 
+        $queryStr_par = 'UPDATE ' . $table_name . ' SET vimeo_id = :vimeo_id, state = "to_title" WHERE movie_key = :movie_key';
         $queryStr_upd = 'UPDATE ' . $table_name . ' SET vimeo_id = :vimeo_id, state = "to_use", error_count = 0 WHERE movie_key = :movie_key';
         $queryStr_err = 'UPDATE ' . $table_name . ' SET error_count = :error_count WHERE movie_key = :movie_key';
 
@@ -204,6 +207,7 @@ class TrailerProcessor {
         $local_name = '' . $res['local_name'];
         $vimeo_id = '' . $res['vimeo_id'];
         $error_count = 0 + $res['error_count'];
+        $state = '' . $res['state'];
 
         if (empty($movie_key) || empty($local_name)) {
             return false;
@@ -223,8 +227,10 @@ class TrailerProcessor {
             $replace_id = 0 + $vimeo_id;
         }
         try {
-            //$vimeo_id = $vimeo_obj->upload($file_local_path, true, $p_chunkDir, 2097152, $replace_id);
-            $vimeo_id = $vimeo_obj->upload($file_local_path);
+            if ('to_upload' == $state) {
+                //$vimeo_id = $vimeo_obj->upload($file_local_path, true, $p_chunkDir, 2097152, $replace_id);
+                $vimeo_id = $vimeo_obj->upload($file_local_path);
+            }
         }
         catch (Exception $exc) {
 //echo "\n";
@@ -247,13 +253,51 @@ class TrailerProcessor {
             return false;
         }
 
-        $vimeo_obj->call('vimeo.videos.setTitle', array('title' => $movie_key, 'video_id' => $vimeo_id));
+        $title_set = false;
+        $title_set_max_attempts = 10;
+        $title_set_cur_run = 0;
+
+        while (true) {
+            $title_set_cur_run += 1;
+            if ($title_set_cur_run > $title_set_max_attempts) {
+                break;
+            }
+
+            try {
+                $vimeo_obj->call('vimeo.videos.setTitle', array('title' => $movie_key, 'video_id' => $vimeo_id));
+                $title_set = true;
+            }
+            catch (Exception $exc) {
+                $title_set = false;
+            }
+            if ($title_set) {
+                break;
+            }
+            sleep(10);
+        }
 
         $vimeo_id = '' . $vimeo_id;
 
+        if (('to_title' == $state) && (!$title_set)) {
+            $error_count += 1;
+            $stmt = $db->prepare($queryStr_err);
+
+            $stmt->bindParam(':movie_key', $movie_key, PDO::PARAM_STR);
+            $stmt->bindParam(':error_count', $error_count, PDO::PARAM_INT);
+
+            $res = $stmt->execute();
+
+            return false;
+        }
+
+        $queryStr_cur = $queryStr_par;
+        if ($title_set) {
+            $queryStr_cur = $queryStr_upd;
+        }
+
         // put the vimeo_id into db, with $queryStr_upd
         //$db->beginTransaction();
-        $stmt = $db->prepare($queryStr_upd);
+        $stmt = $db->prepare($queryStr_cur);
         $stmt->bindParam(':movie_key', $movie_key, PDO::PARAM_STR);
         $stmt->bindParam(':vimeo_id', $vimeo_id, PDO::PARAM_STR);
         $res = $stmt->execute();
@@ -447,7 +491,11 @@ exit(1);
                 break;
             }
 
-            $trail_proc->uploadOneTrailer($trailres_db_path, $local_trailer_dir, $local_chunk_dir, $vimeo_access_info);
+            $res = $trail_proc->uploadOneTrailer($trailres_db_path, $local_trailer_dir, $local_chunk_dir, $vimeo_access_info);
+            if (!$res) {
+                sleep(30);
+            }
+
             if (!$trail_proc->someLeft($trailres_db_path, 'upload')) {
                 break;
             }
