@@ -149,7 +149,7 @@ community_feed.events[] = user.register
 community_feed.events[] = print.subscribe
 community_feed.events[] = comment.recommended
 community_feed.events[] = topic.follow
-community_feed.events[] = image.approved
+;community_feed.events[] = image.approved
 community_feed.events[] = document.approved
 community_feed.events[] = blog.published
 
@@ -226,7 +226,7 @@ blog.issue = 3
 blog.type = "bloginfo"
 blog.article_type = "blog"
 ; prindesk resource
-printdesk.url = "" ; "http://printdesk.tageswoche.ch/print-desk/"
+printdesk.url = ""
 
 characterGroup.a = "a ä à â æ"
 characterGroup.c = "c ç"
