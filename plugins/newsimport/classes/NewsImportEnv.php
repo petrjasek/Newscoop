@@ -357,13 +357,18 @@ class NewsImportEnv
      * @param string $p_lockDir
 	 * @return bool
 	 */
-    public static function Start($p_lockDir)
+    public static function Start($p_lockDir, $p_jobType = '')
     {
         $max_diff_new = 12; // max hours for taking the lock as a real one
 
+        $job_suffix = '';
+        if (!empty($p_jobType)) {
+            $job_suffix = '_' . $p_jobType;
+        }
+
         // stop, if some worker running; return false
-        $working_path = $p_lockDir . self::$s_working;
-        $working_path_date = $p_lockDir . self::$s_working_date;
+        $working_path = $p_lockDir . self::$s_working . $job_suffix;
+        $working_path_date = $p_lockDir . self::$s_working_date . $job_suffix;
 
         $lock_file = null;
 
@@ -428,11 +433,16 @@ class NewsImportEnv
      * @param string $p_lockDir
 	 * @return bool
 	 */
-    public static function Stop($p_lockDir)
+    public static function Stop($p_lockDir, $p_jobType = '')
     {
 
-        $working_path = $p_lockDir . self::$s_working;
-        $working_path_date = $p_lockDir . self::$s_working_date;
+        $job_suffix = '';
+        if (!empty($p_jobType)) {
+            $job_suffix = '_' . $p_jobType;
+        }
+
+        $working_path = $p_lockDir . self::$s_working . $job_suffix;
+        $working_path_date = $p_lockDir . self::$s_working_date . $job_suffix;
 
         $lock_file = fopen($working_path, 'a');
         $locked = flock($lock_file, LOCK_EX); // the LOCK_NB does not work, see https://bugs.php.net/bug.php?id=54453

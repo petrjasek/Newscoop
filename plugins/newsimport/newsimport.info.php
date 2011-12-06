@@ -212,11 +212,20 @@ if (!defined('PLUGIN_NEWSIMPORT_FUNCTIONS')) {
             return false;
         }
 
-        $request_file = dirname(__FILE__).DIRECTORY_SEPARATOR.'admin-files'.DIRECTORY_SEPARATOR.'newsimport'.DIRECTORY_SEPARATOR.'cron'.DIRECTORY_SEPARATOR.'request_import.php';
+        $request_files = array();
+        $request_files['general'] = dirname(__FILE__).DIRECTORY_SEPARATOR.'admin-files'.DIRECTORY_SEPARATOR.'newsimport'.DIRECTORY_SEPARATOR.'cron'.DIRECTORY_SEPARATOR.'request_import.php';
+        $request_files['trailers'] = dirname(__FILE__).DIRECTORY_SEPARATOR.'admin-files'.DIRECTORY_SEPARATOR.'newsimport'.DIRECTORY_SEPARATOR.'cron'.DIRECTORY_SEPARATOR.'process_trailers.php';
 
         $new_cron = array();
         foreach ($cron_output as $one_cron_line) {
-            if (false !== strpos($one_cron_line, $request_file)) {
+            $is_job_file = false;
+            foreach ($request_files as $one_request_file) {
+                if (false !== strpos($one_cron_line, $one_request_file)) {
+                    $is_job_file = true;
+                    break;
+                }
+            }
+            if ($is_job_file) {
                 continue;
             }
             $new_cron[] = $one_cron_line;
@@ -226,10 +235,17 @@ if (!defined('PLUGIN_NEWSIMPORT_FUNCTIONS')) {
             $incl_dir = dirname(__FILE__).DIRECTORY_SEPARATOR.'include'.DIRECTORY_SEPARATOR;
             require($incl_dir . 'default_cron.php');
 
-            $cron_min = $newsimport_cron['min'];
-            $cron_hour = $newsimport_cron['hour'];
+            foreach ($newsimport_cron as $job_type => $job_cron_def) {
+                if (!isset($request_files[$job_type])) {
+                    continue;
+                }
 
-            $new_cron[] = $cron_min . ' ' . $cron_hour . ' * * * ' . $request_file;
+                $cron_min = $job_cron_def['min'];
+                $cron_hour = $job_cron_def['hour'];
+
+                $new_cron[] = $cron_min . ' ' . $cron_hour . ' * * * ' . $request_files[$job_type];
+            }
+
         }
 
         $tmp_file_path = tempnam(sys_get_temp_dir(), '' . mt_rand(100, 999));
@@ -325,8 +341,13 @@ if (!defined('PLUGIN_NEWSIMPORT_FUNCTIONS')) {
             //'movie_title' => array('type' => 'text', 'params' => array(), 'hidden' => false), // movie title
             'movie_lead' => array('type' => 'text', 'params' => array(), 'hidden' => false), // lead/perex short text
             'movie_link' => array('type' => 'text', 'params' => array(), 'hidden' => false), // link to the movie site
-            'movie_trailer' => array('type' => 'text', 'params' => array(), 'hidden' => false), // link to the (vimeo) trailer
             'movie_trailers' => array('type' => 'body', 'params' => array('editor_size' => 250, 'is_content' => 1), 'hidden' => false), // all movie trailer links available
+
+            'movie_trailer' => array('type' => 'text', 'params' => array(), 'hidden' => false), // link to the (vimeo) trailer
+            'movie_trailer_vimeo' => array('type' => 'text', 'params' => array(), 'hidden' => false),
+            'movie_trailer_width' => array('type' => 'text', 'params' => array(), 'hidden' => false),
+            'movie_trailer_height' => array('type' => 'text', 'params' => array(), 'hidden' => false),
+            'movie_trailer_codec' => array('type' => 'text', 'params' => array(), 'hidden' => false),
 
             'movie_distributor' => array('type' => 'text', 'params' => array(), 'hidden' => false), //
             'movie_distributor_link' => array('type' => 'text', 'params' => array(), 'hidden' => false), //

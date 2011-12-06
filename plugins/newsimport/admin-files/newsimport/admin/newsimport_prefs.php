@@ -77,6 +77,15 @@ if (Input::Get('save')) {
         }
     }
 
+    $f_newsimport_vimeo_user_key = Input::Get('f_vimeo_user_key', 'string');
+    SystemPref::Set('NewsImportVimeoAccessKey', $f_newsimport_vimeo_user_key);
+    $f_newsimport_vimeo_user_secret = Input::Get('f_vimeo_user_secret', 'string');
+    SystemPref::Set('NewsImportVimeoAccessSecret', $f_newsimport_vimeo_user_secret);
+
+    $f_newsimport_vimeo_access_token = Input::Get('f_vimeo_access_token', 'string');
+    SystemPref::Set('NewsImportVimeoAccessToken', $f_newsimport_vimeo_access_token);
+    $f_newsimport_vimeo_access_token_secret = Input::Get('f_vimeo_access_token_secret', 'string');
+    SystemPref::Set('NewsImportVimeoAccessTokenSecret', $f_newsimport_vimeo_access_token_secret);
 
 /*
     $f_newsimport_http_auth_usr = Input::Get('f_http_auth_usr', 'string');
@@ -169,6 +178,29 @@ if ($conf_feeds) {
 
 
 ?>
+
+<table border="0" width="600" cellspacing="0" cellpadding="0" class="box_table">
+<?php
+
+    $vimeo_user_key = SystemPref::Get('NewsImportVimeoAccessKey');
+    $vimeo_user_secret = SystemPref::Get('NewsImportVimeoAccessSecret');
+
+    $vimeo_access_token = SystemPref::Get('NewsImportVimeoAccessToken');
+    $vimeo_access_token_secret = SystemPref::Get('NewsImportVimeoAccessTokenSecret');
+
+    echo '<tr><td colspan="2" align="left">' . 'Vimeo access info' . ': </td>';
+    echo '<tr><td width="200">' . 'vimeo key' . ': </td>';
+    echo '<td><input name="f_vimeo_user_key" value="' . htmlspecialchars($vimeo_user_key) . '" /></td></tr>';
+    echo '<tr><td width="200">' . 'vimeo secret' . ': </td>';
+    echo '<td><input name="f_vimeo_user_secret" value="' . htmlspecialchars($vimeo_user_secret) . '" /></td></tr>';
+
+    echo '<tr><td width="200">' . 'vimeo access token' . ': </td>';
+    echo '<td><input name="f_vimeo_access_token" value="' . htmlspecialchars($vimeo_access_token) . '" /></td></tr>';
+    echo '<tr><td width="200">' . 'vimeo access token secret' . ': </td>';
+    echo '<td><input name="f_vimeo_access_token_secret" value="' . htmlspecialchars($vimeo_access_token_secret) . '" /></td></tr>';
+
+?>
+</table>
 
 <!--
 <table border="0" width="600" cellspacing="0" cellpadding="0" class="box_table">

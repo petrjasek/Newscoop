@@ -130,7 +130,10 @@ class KinoData_Parser {
         if ( isset($p_env['cache_dir']) && (!empty($p_env['cache_dir'])) ) {
             $movies_dir = $p_env['cache_dir'];
         }
-        $sqlite_name = $movies_dir . 'movies_info.sqlite';
+        $sqlite_names = array(
+            'movies' => $movies_dir . 'movies_info.sqlite',
+            'trailers' => $movies_dir . 'trailers_info.sqlite',
+        );
 
         // first copy and use movies files, if any
         // this is an addition wrt the general event import
@@ -252,7 +255,7 @@ class KinoData_Parser {
             }
 
             // process_movies_files;
-            $parser->updateMoviesInfo($sqlite_name, $movies_infos_files, $movies_genres_files, $movies_links_files);
+            $parser->updateMoviesInfo($sqlite_names, $movies_infos_files, $movies_genres_files, $movies_links_files);
 
         }
 
@@ -311,7 +314,7 @@ class KinoData_Parser {
                 $cat_limits = $p_limits['categories'];
             }
 
-            $event_load = $parser->prepareKinosEvents($programs_infos_files, $sqlite_name, $this->m_provider, $p_categories, $lim_span_past, $lim_span_next, $cat_limits);
+            $event_load = $parser->prepareKinosEvents($programs_infos_files, $sqlite_names['movies'], $this->m_provider, $p_categories, $lim_span_past, $lim_span_next, $cat_limits);
 
             if (!empty($event_load)) {
                 $event_all = $event_load['events_all'];
@@ -848,10 +851,11 @@ class KinoData_Parser_SimpleXML {
                 }
                 $one_trl_w = trim('' . $one_lnk_trailer->t_movtrw);
                 $one_trl_h = trim('' . $one_lnk_trailer->t_movtrh);
-                $one_trl_format = trim('' . $one_lnk_trailer->t_movtrc);
+                $one_trl_codec = trim('' . $one_lnk_trailer->t_movtrc);
                 $one_trl_url = trim('' . $one_lnk_trailer->t_traurl);
+                $one_trl_time = 0 + trim('' . $one_lnk_trailer->t_movtrd);
                 if (!empty($one_trl_url)) {
-                    $one_mov_info['link_trailer'] = array('url' => $one_trl_url, 'width' => $one_trl_w, 'height' => $one_trl_h, 'format' => $one_trl_format);
+                    $one_mov_info['link_trailer'] = array('url' => $one_trl_url, 'width' => $one_trl_w, 'height' => $one_trl_h, 'codec' => $one_trl_codec, 'time' => $one_trl_time);
                     $movies_infos[$one_mov_key] = $one_mov_info;
                 }
             }
@@ -873,6 +877,205 @@ class KinoData_Parser_SimpleXML {
 
     } // fn parseMoviesInfo
 
+
+    /**
+     * 
+     */
+    private function updateTrailersInfo($p_trailersDatabase, &$p_moviesInfo)
+    {
+        if (!file_exists($p_trailersDatabase)) {
+            $pre_db_file = dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'trailers_info.sqlite';
+            if (file_exists($pre_db_file)) {
+                copy($pre_db_file, $p_trailersDatabase);
+            }
+        }
+
+        $sqlite_name = $p_trailersDatabase;
+        $table_name = 'trailers';
+
+        $to_update = array();
+        $to_insert = array();
+
+        $cre_req = 'CREATE TABLE IF NOT EXISTS ' . $table_name . ' (
+            movie_key TEXT PRIMARY KEY,
+            vimeo_id TEXT DEFAULT "",
+            source_timestamp INTEGER DEFAULT 0,
+            source_url TEXT DEFAULT "",
+            local_name TEXT DEFAULT "",
+            video_codec TEXT DEFAULT "",
+            video_width INTEGER DEFAULT 0,
+            video_height INTEGER DEFAULT 0,
+            state TEXT DEFAULT "",
+            error_count INTEGER DEFAULT 0
+        )';
+        //    video_info TEXT DEFAULT "{}",
+
+        $vimeo_ids = array();
+        $vimeo_updates = array();
+
+    /**
+    Ini phase:
+
+    * take trailer links with timestamps from provided info files; in a data list
+    * search for the movie_keys in videos table:
+        * if not there: put it in, state as "to_download"
+        * if is there: look at timestamps
+            * if the new timestamp is newer, update the link, set state as "to_download"
+            * if the new timestamp equals or older, leave it
+    */
+        //$sel_req = 'SELECT source_timestamp FROM ' . $table_name . ' WHERE movie_key = :movie_key';
+        $sel_req = 'SELECT movie_key, source_timestamp, vimeo_id, state FROM ' . $table_name . '';
+        $upd_req = 'UPDATE ' . $table_name . ' SET source_url = :source_url, source_timestamp = :source_timestamp, state = "to_download", error_count = 0, ';
+        $upd_req .= 'video_codec = :video_codec, video_width = :video_width, video_height = :video_height WHERE movie_key = :movie_key';
+        $ins_req = 'INSERT INTO ' . $table_name . ' (movie_key, source_timestamp, source_url, state, video_codec, video_width, video_height) VALUES ';
+        $ins_req .= '(:movie_key, :source_timestamp, :source_url, "to_download", :video_codec, :video_width, :video_height)';
+        $fin_req = 'UPDATE ' . $table_name . ' SET state = "at_use" WHERE movie_key = :movie_key';
+
+        @$db = new PDO ('sqlite:' . $sqlite_name);
+        $stmt = $db->prepare($cre_req);
+        $res = $stmt->execute();
+        if (!$res) {
+            return false;
+        }
+
+        $timestamps_old = array();
+        $stmt = $db->prepare($sel_req);
+        $res = $stmt->execute();
+        if ($res) {
+            while (true) {
+                $res = $stmt->fetch(PDO::FETCH_ASSOC);
+                if (!$res) {
+                    break;
+                }
+                $movie_key_old = $res['movie_key'];
+                $source_timestamp_old = $res['source_timestamp'];
+                $state_old = $res['state'];
+                $timestamps_old[$movie_key_old] = $source_timestamp_old;
+
+                // taking the vimeo_ids whenever already available
+                $one_vimeo_id = '' . $res['vimeo_id'];
+                if (!empty($one_vimeo_id)) {
+                    $vimeo_ids[$movie_key_old] = $one_vimeo_id;
+                }
+                if ('to_use' == $state_old) {
+                    $vimeo_updates[$movie_key_old] = true;
+                }
+            }
+        }
+
+        foreach ($p_moviesInfo as $mov_key => $mov_info) {
+            $mov_trailer = null;
+            if (isset($mov_info['link_trailer'])) {
+                $mov_trailer = $mov_info['link_trailer'];
+            }
+            if (empty($mov_trailer)) {
+                continue;
+            }
+            $source_timestamp_new = $mov_trailer['time'];
+
+            if (!isset($timestamps_old[$mov_key])) {
+                // no trailer info saved yet, insert it
+                $to_insert[$mov_key] = $mov_trailer;
+                continue;
+            }
+
+            $source_timestamp_old = $res['source_timestamp'];
+            if ($source_timestamp_old >= $source_timestamp_new) {
+                continue;
+            }
+
+            $to_update[$mov_key] = $mov_trailer;
+        }
+
+        $db->beginTransaction();
+
+        $stmt = $db->prepare($ins_req);
+        foreach ($to_insert as $mov_key => $mov_trailer) {
+            //$video_info = json_encode($mov_trailer);
+
+            $source_timestamp = (isset($mov_trailer['time'])) ? $mov_trailer['time'] : 0;
+            $source_url = (isset($mov_trailer['url'])) ? $mov_trailer['url'] : '';
+
+            $video_codec = (isset($mov_trailer['codec'])) ? $mov_trailer['codec'] : '';
+            $video_width = (isset($mov_trailer['width'])) ? $mov_trailer['width'] : 0;
+            $video_height = (isset($mov_trailer['height'])) ? $mov_trailer['height'] : 0;
+
+            $stmt->bindParam(':movie_key', $mov_key, PDO::PARAM_STR);
+            $stmt->bindParam(':source_timestamp', $source_timestamp, PDO::PARAM_INT);
+            $stmt->bindParam(':source_url', $source_url, PDO::PARAM_STR);
+            $stmt->bindParam(':video_codec', $video_codec, PDO::PARAM_STR);
+            $stmt->bindParam(':video_width', $video_width, PDO::PARAM_INT);
+            $stmt->bindParam(':video_height', $video_height, PDO::PARAM_INT);
+
+            $res = $stmt->execute();
+            if (!$res) {
+                return false;
+            }
+        }
+
+        $stmt = $db->prepare($upd_req);
+        foreach ($to_update as $mov_key => $mov_trailer) {
+            //$video_info = json_encode($mov_trailer);
+
+            $source_timestamp = (isset($mov_trailer['time'])) ? $mov_trailer['time'] : 0;
+            $source_url = (isset($mov_trailer['url'])) ? $mov_trailer['url'] : '';
+
+            $video_codec = (isset($mov_trailer['codec'])) ? $mov_trailer['codec'] : '';
+            $video_width = (isset($mov_trailer['width'])) ? $mov_trailer['width'] : 0;
+            $video_height = (isset($mov_trailer['height'])) ? $mov_trailer['height'] : 0;
+
+            $stmt->bindParam(':movie_key', $mov_key, PDO::PARAM_STR);
+            $stmt->bindParam(':source_timestamp', $source_timestamp, PDO::PARAM_INT);
+            $stmt->bindParam(':source_url', $source_url, PDO::PARAM_STR);
+            $stmt->bindParam(':video_codec', $video_codec, PDO::PARAM_STR);
+            $stmt->bindParam(':video_width', $video_width, PDO::PARAM_INT);
+            $stmt->bindParam(':video_height', $video_height, PDO::PARAM_INT);
+
+            $res = $stmt->execute();
+            if (!$res) {
+                return false;
+            }
+        }
+
+        $db->commit();
+
+    /**
+    Fin phase:
+
+    * search the videos table, take all available trailers
+    * take the vimeo ids and put them into movies articles
+    */
+
+        foreach ($vimeo_ids as $movie_key => $one_vimeo_id) {
+            if (isset($p_moviesInfo[$movie_key])) {
+                //$mov_trailer = (isset($p_moviesInfo[$movie_key]['link_trailer'])) ? $p_moviesInfo[$movie_key]['link_trailer'] : null;
+                //if (empty($mov_trailer)) {
+                //    continue; // we do not use the possible vimeo-saved trailer, since telling "no trailer" may mean the trailer was cancelled
+                //}
+                $p_moviesInfo[$movie_key]['trailer_vimeo_id'] = $one_vimeo_id;
+            }
+            else {
+                $p_moviesInfo[$movie_key] = array('trailer_vimeo_id' => $one_vimeo_id,);
+            }
+        }
+
+        $db->beginTransaction();
+        $stmt = $db->prepare($fin_req);
+        foreach ($vimeo_updates as $mov_key => $one_aux) {
+
+            $stmt->bindParam(':movie_key', $mov_key, PDO::PARAM_STR);
+            $res = $stmt->execute();
+            if (!$res) {
+                //return false;
+            }
+
+        }
+        $db->commit();
+
+        return true;
+    }
+
+
     /**
      * Puts new info on movies into the sqlite db
      *
@@ -882,11 +1085,13 @@ class KinoData_Parser_SimpleXML {
      * @param array $p_moviesLinksFiles
      * @return bool
      */
-    public function updateMoviesInfo($p_moviesDatabase, $p_moviesInfosFiles, $p_moviesGenresFiles, $p_moviesLinksFiles)
+    public function updateMoviesInfo($p_moviesDatabases, $p_moviesInfosFiles, $p_moviesGenresFiles, $p_moviesLinksFiles)
     {
         $movies_info = $this->parseMoviesInfo($p_moviesInfosFiles, $p_moviesGenresFiles, $p_moviesLinksFiles);
 
-        $sqlite_name = $p_moviesDatabase;
+        $this->updateTrailersInfo($p_moviesDatabases['trailers'], $movies_info);
+
+        $sqlite_name = $p_moviesDatabases['movies'];
         $table_name = $this->m_table_name;
 
         ksort($movies_info);
@@ -905,7 +1110,7 @@ class KinoData_Parser_SimpleXML {
         foreach ($movies_info as $mov_key => $mov_info) {
             $movies_to_preload[$mov_key] = true;
         }
-        $movies_preloaded = $this->loadMoviesByKeys($movies_to_preload, $p_moviesDatabase);
+        $movies_preloaded = $this->loadMoviesByKeys($movies_to_preload, $p_moviesDatabases['movies']);
         foreach ($movies_preloaded as $mov_key => $one_movie_data_pre) {
             if (isset($movies_info[$mov_key])) {
                 $mov_info = $movies_info[$mov_key];
@@ -1298,6 +1503,8 @@ class KinoData_Parser_SimpleXML {
 
             $one_mov_trailers = array();
             $trailer_official = '';
+            $trailer_official_vimeo = '';
+            $trailer_official_info = array();
 
             if (!empty($one_movie)) {
                 if (isset($one_movie['genres'])) {
@@ -1326,11 +1533,17 @@ class KinoData_Parser_SimpleXML {
                     if ( isset($one_movie['link_trailer']['url']) && (!empty($one_movie['link_trailer']['url'])) ) {
                         $one_mov_trailers[] = $one_movie['link_trailer']['url'];
                         $trailer_official = $one_movie['link_trailer']['url'];
+                        $trailer_official_info = $one_movie['link_trailer'];
                     }
                 }
                 if ( isset($one_movie['trailer']) && (!empty($one_movie['trailer'])) ) {
                     $one_mov_trailers[] = $one_movie['trailer'];
                 }
+
+                if ( isset($one_movie['trailer_vimeo_id']) && (!empty($one_movie['trailer_vimeo_id'])) ) {
+                    $trailer_official_vimeo = $one_movie['trailer_vimeo_id'];
+                }
+
             }
 
             $one_use_desc = $one_mov_desc;
@@ -1424,6 +1637,8 @@ hh.mm:langs:flags
                     $one_event['movie_trailers'][] = $this->makeLink($cur_trailer, 'Trailer', true, true);
                 }
                 $one_event['movie_trailer'] = $trailer_official;
+                $one_event['movie_trailer_vimeo'] = $trailer_official_vimeo;
+                $one_event['movie_trailer_info'] = $trailer_official_info;
 
                 $one_event['genre'] = $one_mov_genre;
                 $one_event['languages'] = '';
