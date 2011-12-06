@@ -15,9 +15,6 @@ $sl_conf_path = 'conf/sqlite_conf.php';
 require($db_conf_path);
 require($sl_conf_path);
 
-var_dump($Campsite['db']);
-var_dump($trailers_path);
-
 function transfer_trailers($p_sqlitePath, $p_mysqlConf)
 {
     $table_name = 'trailers';
@@ -29,14 +26,19 @@ function transfer_trailers($p_sqlitePath, $p_mysqlConf)
     $db_mysql = null;
 
     $queryStr_sel = 'SELECT movie_key, vimeo_id, video_codec, video_width, video_height FROM ' . $table_name . ' WHERE vimeo_id != ""';
-    $queryStr_upd = 'UPDATE Xscreening SET vimeo_id = %vimeo_id, video_codec = %video_codec, video_width = %video_width, video_height = %video_height WHERE movie_key = %movie_key';
+    $queryStr_upd = 'UPDATE Xscreening SET Fmovie_trailer_vimeo = ?, Fmovie_trailer_codec = ?, Fmovie_trailer_width = ?, Fmovie_trailer_height = ? WHERE Fmovie_key = ?';
 
     @$db = new PDO ('sqlite:' . $sqlite_name);
     $stmt = $db->prepare($queryStr_sel);
     $res = $stmt->execute();
-    if ($res) {
+    if (!$res) {
+        return false;
+    }
+    while (true) {
         $res = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($res) {
+        if (!$res) {
+            break;
+        }
             $movie_key = '' . $res['movie_key'];
             $vimeo_id = '' . $res['vimeo_id'];
             $video_codec = '' . $res['video_codec'];
@@ -48,24 +50,33 @@ function transfer_trailers($p_sqlitePath, $p_mysqlConf)
             }
 
             $trailers[$movie_key] = array('vimeo_id' => $vimeo_id, 'video_codec' => $video_codec, 'video_width' => $video_width, 'video_height' => $video_height);
-        }
     }
 
+    $mysql_dsn = 'mysql:host=' . $p_mysqlConf['host'] . ';dbname=' . $p_mysqlConf['name'];
+    $mysql_username = $p_mysqlConf['user'];
+    $mysql_password = $p_mysqlConf['pass'];
+    $mysql_options = array(
+        PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8',
+    ); 
 
-    $mysql_access = implode(', ', $p_mysqlConf)
-    @$db = new PDO ('mysql:' . $mysql_access);
+    @$db = new PDO($mysql_dsn, $mysql_username, $mysql_password, $mysql_options);
 
     $db->beginTransaction();
     $stmt = $db->prepare($queryStr_upd);
-    foreach ($trailers as $movie_key => $trailer_info) {
 
-        $stmt->bindParam(':movie_key', $trailer_info['movie_key'], PDO::PARAM_STR);
-        $stmt->bindParam(':vimeo_id', $trailer_info['vimeo_id'], PDO::PARAM_STR);
-        $stmt->bindParam(':video_codec', $trailer_info['video_codec'], PDO::PARAM_STR);
-        $stmt->bindParam(':video_width', $trailer_info['video_width'], PDO::PARAM_STR);
-        $stmt->bindParam(':video_height', $trailer_info['video_height'], PDO::PARAM_STR);
+    ksort($trailers);
+    foreach ($trailers as $movie_key => $trailer_info) {
+        $br = $stmt->bindParam(5, $movie_key, PDO::PARAM_STR, 255);
+        $br = $stmt->bindParam(1, $trailer_info['vimeo_id'], PDO::PARAM_STR, 255);
+        $br = $stmt->bindParam(2, $trailer_info['video_codec'], PDO::PARAM_STR, 255);
+        $br = $stmt->bindParam(3, $trailer_info['video_width'], PDO::PARAM_STR, 255);
+        $br = $stmt->bindParam(4, $trailer_info['video_height'], PDO::PARAM_STR, 255);
 
         $res = $stmt->execute();
+        if (!$res) {
+            var_dump($movie_key);
+            print_r($stmt->errorInfo());
+        }
 
     }
     $db->commit();
