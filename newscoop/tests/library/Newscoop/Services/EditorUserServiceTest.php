@@ -100,20 +100,28 @@ class EditorUserServiceTest extends \RepositoryTestCase
                 'email' => 'private_user',
                 'status' => User::STATUS_ACTIVE,
             )),
+            'public_admin_editor' => $this->service->save(array(
+                'username' => 'public_admin_editor',
+                'email' => 'public_admin_editor',
+                'status' => User::STATUS_ACTIVE,
+                'is_public' => 1,
+                'user_type' => array($roles['admins']->getId(), $roles['editors1']->getId()),
+            )),
         );
     }
 
     public function testGetEditors()
     {
         $editors = $this->service->findEditors();
-        $this->assertEquals(2, count($editors));
-        $this->assertEquals('public_editor', $editors[0]->getUsername());
-        $this->assertEquals('public_editor_2', $editors[1]->getUsername());
+        $this->assertEquals(3, count($editors));
+        $this->assertEquals('public_admin_editor', $editors[0]->getUsername());
+        $this->assertEquals('public_editor', $editors[1]->getUsername());
+        $this->assertEquals('public_editor_2', $editors[2]->getUsername());
     }
 
     public function testGetEditorsCount()
     {
-        $this->assertEquals(2, $this->service->getEditorsCount());
+        $this->assertEquals(3, $this->service->getEditorsCount());
     }
 
     public function testGetActiveUsers()
@@ -138,12 +146,12 @@ class EditorUserServiceTest extends \RepositoryTestCase
         $this->em->flush();
 
         $this->assertEquals(2, count($this->service->getActiveUsers()));
-        $this->assertEquals(2, count($this->service->findEditors()));
+        $this->assertEquals(3, count($this->service->findEditors()));
 
         $this->em->remove($author);
         $this->em->flush();
 
         $this->assertEquals(2, count($this->service->getActiveUsers()));
-        $this->assertEquals(2, count($this->service->findEditors()));
+        $this->assertEquals(3, count($this->service->findEditors()));
     }
 }

@@ -351,15 +351,8 @@ class UserService implements ObjectRepository
      */
     public function getActiveUsers($countOnly=false, $page=1, $limit=8)
     {
-        $offset = ($page-1) * $limit;
-
-        $result = $this->repository->findActiveUsers($countOnly, $offset, $limit, $this->config['editorRoles']);
-
-        if ($countOnly) {
-            return $result[1];
-        }
-
-        return $result;
+        $offset = ($page - 1) * $limit;
+        return $this->repository->findActiveUsers($countOnly, $offset, $limit, $this->config['editorRoles']);
     }
 
     /**

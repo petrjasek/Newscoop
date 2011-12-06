@@ -164,28 +164,53 @@ class UserRepository extends EntityRepository
     public function findActiveUsers($countOnly, $offset, $limit, array $editorRoles)
     {
         $expr = $this->getEntityManager()->getExpressionBuilder();
-        $qb = $this->createQueryBuilder('u');
+        $qb = $this->createPublicUserQueryBuilder();
+        $qb->andWhere($qb->expr()->notIn('u.id', $this->getEditorIds($editorRoles)));
 
         if ($countOnly) {
             $qb->select('COUNT(u.id)');
+            return $qb->getQuery()->getSingleScalarResult();
         }
 
-        $qb->leftJoin('u.groups', 'g', Expr\Join::WITH, $expr->in('g.id', $editorRoles))
-            ->where($qb->expr()->eq("u.status", User::STATUS_ACTIVE))
-            ->andWhere($qb->expr()->eq("u.is_public", true))
-            ->andWhere('g.id IS NULL');
+        $qb->orderBy('u.points', 'DESC');
+        $qb->addOrderBy('u.id', 'ASC');
+        $qb->setFirstResult($offset);
+        $qb->setMaxResults($limit);
+        return $qb->getQuery()->getResult();
+    }
 
-        if (!$countOnly) {
-            $qb->orderBy('u.points', 'DESC');
-            $qb->addOrderBy('u.id', 'ASC');
+    /**
+     * Create query builder for public users
+     *
+     * @return Doctrine\ORM\QueryBuilder
+     */
+    private function createPublicUserQueryBuilder()
+    {
+        return $this->createQueryBuilder('u')
+            ->andWhere('u.status = :status')
+            ->andWhere('u.is_public = :public')
+            ->setParameter('status', User::STATUS_ACTIVE)
+            ->setParameter('public', true);
+    }
 
-            $qb->setFirstResult($offset);
-            $qb->setMaxResults($limit);
+    /**
+     * Get editor ids
+     *
+     * @param array $editorRoles
+     * @return array
+     */
+    private function getEditorIds(array $editorRoles)
+    {
+        $expr = $this->getEntityManager()->getExpressionBuilder();
+        $query = $this->createQueryBuilder('u')
+            ->select('DISTINCT(u.id)')
+            ->innerJoin('u.groups', 'g', Expr\Join::WITH, $expr->in('g.id', $editorRoles))
+            ->getQuery();
 
-            return $qb->getQuery()->getResult();
-        } else {
-            return $qb->getQuery()->getOneOrNullResult();
-        }
+        $ids = array_map(function($row) {
+            return (int) $row['id'];
+        }, $query->getResult());
+        return $ids;
     }
 
     /**
@@ -264,19 +289,12 @@ class UserRepository extends EntityRepository
     public function findEditors(array $editorRoles, $limit, $offset)
     {
         $expr = $this->getEntityManager()->getExpressionBuilder();
-        $query = $this->createQueryBuilder('u')
-            ->innerJoin('u.groups', 'g', Expr\Join::WITH, $expr->in('g.id', $editorRoles))
-            ->andWhere('u.status = :status')
-            ->andWhere('u.is_public = :public')
+        $query = $this->createPublicUserQueryBuilder()
+            ->andWhere($expr->in('u.id', $this->getEditorIds($editorRoles)))
             ->orderBy('u.username', 'asc')
             ->setFirstResult($offset)
             ->setMaxResults($limit)
             ->getQuery();
-
-        $query->setParameters(array(
-            'public' => 1,
-            'status' => User::STATUS_ACTIVE,
-        ));
 
         return $query->getResult();
     }
@@ -290,17 +308,10 @@ class UserRepository extends EntityRepository
     public function getEditorsCount(array $editorRoles)
     {
         $expr = $this->getEntityManager()->getExpressionBuilder();
-        $query = $this->createQueryBuilder('u')
+        $query = $this->createPublicUserQueryBuilder()
             ->select('COUNT(u)')
-            ->innerJoin('u.groups', 'g', Expr\Join::WITH, $expr->in('g.id', $editorRoles))
-            ->andWhere('u.status = :status')
-            ->andWhere('u.is_public = :public')
+            ->andWhere($expr->in('u.id', $this->getEditorIds($editorRoles)))
             ->getQuery();
-
-        $query->setParameters(array(
-            'public' => 1,
-            'status' => User::STATUS_ACTIVE,
-        ));
 
         return $query->getSingleScalarResult();
     }
