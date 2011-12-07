@@ -75,6 +75,7 @@
 	border:none;
 }
 .wobs-calendar .wobs-date-label {
+        opacity:0.7;
 	position:relative;
 	margin: 25px auto 0 auto;
 	font-size:18px;
