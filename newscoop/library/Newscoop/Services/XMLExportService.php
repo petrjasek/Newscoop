@@ -108,7 +108,7 @@ class XMLExportService
                 }
             }
 
-            $attachments = \ArticleAttachment::GetAttachmentsByArticleNumber($article->getNumber());
+            $attachments = \ArticleAttachment::GetAttachmentsByArticleNumber($article->getNumber(), $article->getLanguageId());
             foreach ($attachments as $attachment) {
                 $temp = explode('.', $attachment->getFileName());
                 if (substr($attachment->getFileName(), 0, strlen($prefix)) == $prefix && $temp[count($temp) - 1] == 'pdf') {
@@ -157,7 +157,7 @@ class XMLExportService
     {
         $attachments = array();
         foreach ($articles as $article) {
-            $temp_attachments = \ArticleAttachment::GetAttachmentsByArticleNumber($article->getNumber());
+            $temp_attachments = \ArticleAttachment::GetAttachmentsByArticleNumber($article->getNumber(), $article->getLanguageId());
             foreach ($temp_attachments as $attachment) {
                 $temp = explode('.', $attachment->getFileName());
                 if (substr($attachment->getFileName(), 0, strlen($prefix)) == $prefix && $temp[count($temp) - 1] == 'pdf') {
