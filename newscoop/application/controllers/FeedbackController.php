@@ -148,7 +148,9 @@ class FeedbackController extends Zend_Controller_Action
         $toEmail = 'ozan.ozbek@sourcefabric.org';
         
         $user = new User($values['user']);
+        echo('1');
 		$fromEmail = $user->getEmail();
+        echo('2');
         
         $message = $values['message'];
         /*
@@ -157,15 +159,22 @@ class FeedbackController extends Zend_Controller_Action
         */
         
         $mail = new Zend_Mail('utf-8');
+        echo('3');
 		$mail->setSubject('Leserfeedback: '.$values['subject']);
+        echo('4');
 		$mail->setBodyText($message);
+        echo('5');
 		$mail->setFrom($fromEmail);
+        echo('6');
 		$mail->addTo($toEmail);
+        echo('7');
 		try {
 			$mail->send();
+            echo('8');
 		}
 		catch (Exception $e) {
 		}
+        echo('9');
     }
 
     public function indexAction()
