@@ -160,6 +160,28 @@ class FeedbackController extends Zend_Controller_Action
         $mail->setBodyHtml($message);
         $mail->setFrom($fromEmail);
         $mail->addTo($toEmail);
+        
+        if ($values['attachment_type'] == 'image') {
+            $item = new Image($values['image_id']);
+            $location = $item->getImageStorageLocation();
+            
+            $file = fopen($location, 'r');
+            $contents = fread($file, filesize($location));
+            fclose($file);
+            
+            $mail->createAttachment($contents);
+        }
+        else if ($values['attachment_type'] == 'document') {
+            $item = new Image($values['document_id']);
+            $location = $item->getStorageLocation();
+            
+            $file = fopen($location, 'r');
+            $contents = fread($file, filesize($location));
+            fclose($file);
+            
+            $mail->createAttachment($contents);
+        }
+        
         try {
 			$mail->send();
 		}
