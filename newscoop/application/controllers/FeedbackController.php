@@ -161,6 +161,7 @@ class FeedbackController extends Zend_Controller_Action
         $mail->setFrom($fromEmail);
         $mail->addTo($toEmail);
         
+        /*
         if ($values['attachment_type'] == 'image') {
             $item = new Image($values['image_id']);
             $location = $item->getImageStorageLocation();
@@ -175,6 +176,7 @@ class FeedbackController extends Zend_Controller_Action
             
             $mail->createAttachment($contents);
         }
+        */
         
         try {
 			$mail->send();
