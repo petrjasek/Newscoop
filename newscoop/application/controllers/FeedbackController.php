@@ -159,7 +159,7 @@ class FeedbackController extends Zend_Controller_Action
 			$mail->send();
 		}
 		catch (Exception $e) {
-			
+			die('something wrong. dump: '.serialize($values).' '.$fromEmail);
 		}
     }
 
