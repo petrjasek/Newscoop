@@ -82,7 +82,9 @@ class FeedbackController extends Zend_Controller_Action
 				$current_user = $this->_helper->service('user')->getCurrentUser();
                 $this->_helper->service->notifyDispatcher("image.delivered", array('user' => $current_user));
 
-				$this->view->response = $this->view->translate('File is uploaded and your message is sent.');
+				$this->sendMail($values);
+                
+                $this->view->response = $this->view->translate('File is uploaded and your message is sent.');
 			}
 			else if (isset($parameters['document_id'])) {
 				$values['attachment_type'] = 'document';
@@ -93,12 +95,16 @@ class FeedbackController extends Zend_Controller_Action
 
 				$current_user = $this->_helper->service('user')->getCurrentUser();
                 $this->_helper->service->notifyDispatcher("document.delivered", array('user' => $current_user));
+                
+                $this->sendMail($values);
 
 				$this->view->response = $this->view->translate('File is uploaded and your message is sent.');
 			}
 			else {
 				$feedbackRepository->save($feedback, $values);
 				$feedbackRepository->flush();
+                
+                $this->sendMail($values);
 
 				$this->view->response = $this->view->translate('Your message is sent.');
 			}
@@ -136,6 +142,26 @@ class FeedbackController extends Zend_Controller_Action
 			$this->view->response = $document->getAttachmentId();
 		}
 	}
+    
+    public function sendMail($values)
+    {
+        $toEmail = 'ozan.ozbek@sourcefabric.org';
+        
+        $user = new User($values['user']);
+		$fromEmail = $user->getEmail();
+        
+        $mail = new Zend_Mail('utf-8');
+		$mail->setSubject($values['subject']);
+		$mail->setBodyText($values['message']);
+		$mail->setFrom($fromEmail);
+		$mail->addTo($toEmail);
+		try {
+			$mail->send();
+		}
+		catch (Exception $e) {
+			
+		}
+    }
 
     public function indexAction()
     {
