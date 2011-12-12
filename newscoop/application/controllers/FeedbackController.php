@@ -157,6 +157,7 @@ class FeedbackController extends Zend_Controller_Action
 		$mail->addTo($toEmail);
 		try {
 			$mail->send();
+            die('dump: '.serialize($values).' '.$fromEmail.' '.$toEmail)
 		}
 		catch (Exception $e) {
 			die('something wrong. dump: '.serialize($values).' '.$fromEmail);
