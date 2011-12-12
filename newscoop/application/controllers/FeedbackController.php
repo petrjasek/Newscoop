@@ -148,33 +148,23 @@ class FeedbackController extends Zend_Controller_Action
         $toEmail = 'ozan.ozbek@sourcefabric.org';
         
         $user = new User($values['user']);
-        echo('1');
-		$fromEmail = $user->getEmail();
-        echo('2');
+        $fromEmail = $user->getEmail();
         
         $message = $values['message'];
-        /*
         $message = $message.'\nVon <a href="http://www.tageswoche.ch/user/profile/'.$user->getUsername().'">'.$user->getUsername().'</a> ('.$user->getRealName().')';
         $message = $message.'\nGesendet von: <a href="'.$values['url'].'">'.$values['url'].'</a>';
-        */
         
         $mail = new Zend_Mail('utf-8');
-        echo('3');
-		$mail->setSubject('Leserfeedback: '.$values['subject']);
-        echo('4');
-		$mail->setBodyText($message);
-        echo('5');
-		$mail->setFrom($fromEmail);
-        echo('6');
-		$mail->addTo($toEmail);
-        echo('7');
-		try {
+        $mail->setSubject('Leserfeedback: '.$values['subject']);
+        $mail->setBodyText($message);
+        $mail->setFrom($fromEmail);
+        $mail->addTo($toEmail);
+        try {
 			$mail->send();
-            echo('8');
 		}
 		catch (Exception $e) {
 		}
-        echo('9');
+        echo(' ');
     }
 
     public function indexAction()
