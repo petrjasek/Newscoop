@@ -151,8 +151,10 @@ class FeedbackController extends Zend_Controller_Action
 		$fromEmail = $user->getEmail();
         
         $message = $values['message'];
+        /*
         $message = $message.'\nVon <a href="http://www.tageswoche.ch/user/profile/'.$user->getUsername().'">'.$user->getUsername().'</a> ('.$user->getRealName().')';
         $message = $message.'\nGesendet von: <a href="'.$values['url'].'">'.$values['url'].'</a>';
+        */
         
         $mail = new Zend_Mail('utf-8');
 		$mail->setSubject('Leserfeedback: '.$values['subject']);
