@@ -161,7 +161,7 @@ class FeedbackController extends Zend_Controller_Action
             $location = $item->getImageStorageLocation();
             $contents = file_get_contents($location);
             
-            echo($location);
+            $message = $message.' '.$location;
             
             $mail->createAttachment($contents);
         }
