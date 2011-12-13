@@ -145,7 +145,7 @@ class FeedbackController extends Zend_Controller_Action
     
     public function sendMail($values)
     {
-        $toEmail = 'ozan.ozbek@sourcefabric.org';
+        $toEmail = 'dienstpult@tageswoche.ch';
         
         $user = new User($values['user']);
         $fromEmail = $user->getEmail();
@@ -156,30 +156,45 @@ class FeedbackController extends Zend_Controller_Action
         
         $mail = new Zend_Mail('utf-8');
         
-        if ($values['attachment_type'] == 'image') {
-            $item = new Image($values['image_id']);
-            $location = $item->getImageStorageLocation();
-            $contents = file_get_contents($location);
-            
-            $message = $message.' -- '.$location;
-            
-            $mail->createAttachment($contents);
-        }
-        else if ($values['attachment_type'] == 'document') {
-            $item = new Image($values['document_id']);
-            $location = $item->getStorageLocation();
-            $contents = file_get_contents($location);
-            
-            $mail->createAttachment($contents);
-        }
-        
-        $message = $message.' -x';
-        
         $mail->setSubject('Leserfeedback: '.$values['subject']);
-        //$mail->setBodyText($message);
         $mail->setBodyHtml($message);
         $mail->setFrom($fromEmail);
         $mail->addTo($toEmail);
+        
+        if ($values['attachment_type'] == 'image') {
+            $item = new Image($values['attachment_id']);
+            $location = $item->getImageStorageLocation();
+            $contents = file_get_contents($location);
+            
+            $filename = $item->getImageFileName();
+            $tempFilename = explode('.', $filename);
+            $extension = $tempFilename[count($tempFilename) - 1];
+            
+            $at = new Zend_Mime_Part($contents);
+            if ($extension == 'gif') $at->type = 'image/gif';
+            if ($extension == 'jpg' || $extension == 'jpeg') $at->type = 'image/jpeg';
+            if ($extension == 'png') $at->type = 'image/png';
+            $at->disposition = Zend_Mime::DISPOSITION_INLINE;
+            $at->encoding    = Zend_Mime::ENCODING_BASE64;
+            $at->filename    = $filename;
+             
+            $mail->addAttachment($at);
+        }
+        else if ($values['attachment_type'] == 'document') {
+            $item = new Attachment($values['attachment_id']);
+            $location = $item->getStorageLocation();
+            $contents = file_get_contents($location);
+            
+            $filename = $item->getFileName();
+            
+            $at = new Zend_Mime_Part($contents);
+            $at->type = 'application/pdf';
+            $at->disposition = Zend_Mime::DISPOSITION_INLINE;
+            $at->encoding    = Zend_Mime::ENCODING_BASE64;
+            $at->filename    = $filename;
+             
+            $mail->addAttachment($at);
+        }
         
         try {
 			$mail->send();
