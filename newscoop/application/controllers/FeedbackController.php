@@ -145,8 +145,7 @@ class FeedbackController extends Zend_Controller_Action
     
     public function sendMail($values)
     {
-        //$toEmail = 'dienstpult@tageswoche.ch';
-        $toEmail = 'sebastian.simon@sourcefabric.org';
+        $toEmail = 'dienstpult@tageswoche.ch';
         
         $user = new User($values['user']);
         $fromEmail = $user->getEmail();
