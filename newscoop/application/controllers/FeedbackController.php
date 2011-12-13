@@ -155,17 +155,13 @@ class FeedbackController extends Zend_Controller_Action
         $message = $message.'<br>Gesendet von: <a href="'.$values['url'].'">'.$values['url'].'</a>';
         
         $mail = new Zend_Mail('utf-8');
-        $mail->setSubject('Leserfeedback: '.$values['subject']);
-        //$mail->setBodyText($message);
-        $mail->setBodyHtml($message);
-        $mail->setFrom($fromEmail);
-        $mail->addTo($toEmail);
         
-        /*
         if ($values['attachment_type'] == 'image') {
             $item = new Image($values['image_id']);
             $location = $item->getImageStorageLocation();
             $contents = file_get_contents($location);
+            
+            echo($location);
             
             $mail->createAttachment($contents);
         }
@@ -176,7 +172,12 @@ class FeedbackController extends Zend_Controller_Action
             
             $mail->createAttachment($contents);
         }
-        */
+        
+        $mail->setSubject('Leserfeedback: '.$values['subject']);
+        //$mail->setBodyText($message);
+        $mail->setBodyHtml($message);
+        $mail->setFrom($fromEmail);
+        $mail->addTo($toEmail);
         
         try {
 			$mail->send();
