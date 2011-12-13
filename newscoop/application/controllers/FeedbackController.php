@@ -161,7 +161,7 @@ class FeedbackController extends Zend_Controller_Action
             $location = $item->getImageStorageLocation();
             $contents = file_get_contents($location);
             
-            $message = $message.' '.$location;
+            $message = $message.' -- '.$location;
             
             $mail->createAttachment($contents);
         }
@@ -172,6 +172,8 @@ class FeedbackController extends Zend_Controller_Action
             
             $mail->createAttachment($contents);
         }
+        
+        $message = $message.' -x';
         
         $mail->setSubject('Leserfeedback: '.$values['subject']);
         //$mail->setBodyText($message);
