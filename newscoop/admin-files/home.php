@@ -30,7 +30,7 @@ if ((CampCache::IsEnabled() || CampTemplateCache::factory()) && ($clearCache == 
 
     // Clear compiled templates
     require_once dirname(dirname(__FILE__)) . '/template_engine/classes/CampTemplate.php';
-    CampTemplate::singleton()->clear_compiled_tpl();
+    CampTemplate::singleton()->clearCompiledTpl();
 
     // Clear template cache storage
     if (CampTemplateCache::factory()) CampTemplateCache::factory()->clean();
