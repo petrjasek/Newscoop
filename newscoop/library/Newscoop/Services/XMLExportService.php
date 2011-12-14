@@ -202,7 +202,7 @@ class XMLExportService
         }
 
         $this->package = $packageName;
-        $zip->close(); 
+        $zip->close();
     }
     
     public function upload($directoryName, $host, $user, $password)
@@ -219,15 +219,14 @@ class XMLExportService
         ftp_close($connection);
     }
     
-    public function clean($directoryName)
+    public function clean($directoryName, $fileName)
     {
         $directory = opendir($directoryName);
         while (($file = readdir($directory)) !== false) {
-            if ($file != '.' && $file != '..') {
-                unlink($directoryName.'/'.$file);
+            if (preg_match("/$fileName/", $file)) {
+                unlink($directoryName . '/' . $file);
             }
         }
         closedir($directory);
-        rmdir($directoryName);
     }
 }

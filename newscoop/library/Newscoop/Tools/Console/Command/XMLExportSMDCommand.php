@@ -73,7 +73,7 @@ EOT
         try {
             $xmlExportService->createArchive($config['directoryName'], $config['fileName'], $contents, $attachments);
             $xmlExportService->upload($config['directoryName'], $config['ftpHost'], $config['ftpUsername'], $config['ftpPassword']);
-            $xmlExportService->clean($config['directoryName']);
+            $xmlExportService->clean($config['directoryName'], $config['fileName']);
         } catch (\Exception $e) {
             echo $e->getMessage() . "\n";
             exit;
