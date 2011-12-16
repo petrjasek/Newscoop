@@ -8,10 +8,10 @@ function smarty_function_user_key($p_params, &$p_smarty)
     $userSubscriptionService = $controller->getHelper('service')->getService('user_subscription');
     
     $user = $userService->getCurrentUser();
-    $userSubscriptionService->fetchSubscriber($user);
     
     if ($user) {
         try {
+            $userSubscriptionService->fetchSubscriber($user);
             $userSubscriptionKey = $userSubscriptionService->createKey($user);
             $userSubscriptionService->setKey($user, $userSubscriptionKey);
             return($userSubscriptionKey);
