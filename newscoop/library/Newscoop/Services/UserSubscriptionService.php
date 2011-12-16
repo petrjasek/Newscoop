@@ -102,13 +102,26 @@ class UserSubscriptionService
             return(false);
         }
         
+        if ($user->getSubscriber() !== '') {
+            $url = 'https://abo.tageswoche.ch/dmpro/ws/subscriber/NMBA/'.$user->getSubscriber();
+            $client = new \Zend_Http_Client();
+            $client->setUri($url);
+            $client->setMethod(\Zend_Http_Client::GET);
+            $response = $client->request();
+            
+            $xml = new \SimpleXMLElement($response->getBody());
+            if (!$xml->subscriber) {
+                $user->setSubscriber('');
+            }
+        }
+        
         $subscriber = $xml->subscriber[0] ? (int) $xml->subscriber[0]->subscriberId : false;
         if (is_numeric($subscriber)) {
-            //if (!$user->getSubscriber()) {
+            if (!$user->getSubscriber()) {
                 $user->setSubscriber($subscriber);
                 $this->em->persist($user);
                 $this->em->flush();
-            //}   
+            }   
             return($subscriber);
         }
         else {
