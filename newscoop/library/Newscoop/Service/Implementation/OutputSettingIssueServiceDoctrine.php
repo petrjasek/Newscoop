@@ -59,7 +59,10 @@ implements IOutputSettingIssueService
     {
         if ($issue instanceof Issue) {
             $issue = $issue->getId();
+        } else if (!$issue) {
+            return array();
         }
+
         $em = $this->getEntityManager();
         $repository = $em->getRepository($this->entityClassName);
         $resources = $repository->findByIssue($issue);
