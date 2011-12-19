@@ -95,7 +95,10 @@ class OutputSettingSectionServiceDoctrine extends AEntityBaseServiceDoctrine
     {
         if ($section instanceof Section) {
             $section = $section->getId();
+        } else if (!$section) {
+            return array();
         }
+
         $em = $this->getEntityManager();
         $repository = $em->getRepository($this->entityClassName);
         $resources = $repository->findBySection($section);

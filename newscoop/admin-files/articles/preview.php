@@ -65,15 +65,20 @@ $publicationThemes = $themeManagementService->getThemes($publicationObj->getPubl
 
 if (!$outputIssueSettings) {
     if (count($publicationThemes) > 0) {
-        $themePath = $publicationThemes[0]->getPath();
-        $outputIssueSettings = new OutputSettingsIssue();
-        $outputIssueSettings->setOutput($outputService->findByName('Web'));
-        $outputIssueSettings->setIssue($issueService->getById($issueObj->getIssueId()));
-        $outputIssueSettings->setThemePath($syncRsc->getThemePath($themePath));
-        $outputIssueSettings->setFrontPage(null);
-        $outputIssueSettings->setSectionPage(null);
-        $outputIssueSettings->setArticlePage(null);
-        $outputSettingIssueService->insert($outputIssueSettings);
+        try {
+            $themePath = $publicationThemes[0]->getPath();
+            $outputIssueSettings = new OutputSettingsIssue();
+            $outputIssueSettings->setOutput($outputService->findByName('Web'));
+            $outputIssueSettings->setIssue($issueService->getById($issueObj->getIssueId()));
+            $outputIssueSettings->setThemePath($syncRsc->getThemePath($themePath));
+            $outputIssueSettings->setFrontPage(null);
+            $outputIssueSettings->setSectionPage(null);
+            $outputIssueSettings->setArticlePage(null);
+            $outputSettingIssueService->insert($outputIssueSettings);
+        } catch (\Exception $e) {
+            $errorStr = getGS('This article cannot be previewed. Please make sure the article has an issue assigned.');
+            camp_html_display_error($errorStr, null, true);
+        }
     } else {
         $errorStr = getGS('This issue cannot be previewed. Please make sure the publication has a theme assigned.');
         camp_html_display_error($errorStr, null, true);
