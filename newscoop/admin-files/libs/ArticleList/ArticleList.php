@@ -253,7 +253,7 @@ class ArticleList extends BaseList
 		. '&amp;f_language_selected=' . $article->getLanguageId();
 		$articleLink = $Campsite['WEBSITE_URL'].'/admin/articles/edit.php' . $articleLinkParams;
 		$previewLink = $Campsite['WEBSITE_URL'].'/admin/articles/preview.php' . $articleLinkParams;
-		$htmlPreviewLink = '<a href="'.$previewLink.'" target="_blank" title="'.getGS('Preview').'">'.getGS('Preview').'</a>';
+		$htmlPreviewLink = $article->getIssueNumber() ? '<a href="'.$previewLink.'" target="_blank" title="'.getGS('Preview').'">'.getGS('Preview').'</a>' : 'n/a';
 
 		$lockInfo = '';
 		$lockHighlight = false;
