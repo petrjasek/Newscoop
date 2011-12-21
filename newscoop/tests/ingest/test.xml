@@ -90,7 +90,7 @@
 <body.content>
 <p lede="true">first</p>
 <p>next</p>
-<hl2>h2</hl2>
+<hl2>subheadline</hl2>
 <p>last</p>
 </body.content>
 </body>

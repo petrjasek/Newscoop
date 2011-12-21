@@ -15,7 +15,7 @@ class NewsMlParserTest extends \PHPUnit_Framework_TestCase
     const NEWSML_UPDATED = '/../tests/ingest/test_updated.xml';
     const TITLE = 'title';
     const SUBTITLE = '';
-    const CONTENT = "<p>next</p>\n<h2>h2</h2>\n<p>last</p>";
+    const CONTENT = "<p>next</p>\n<h4>subheadline</h4>\n<p>last</p>";
     const CREATED = '20110825T051533+0200';
     const UPDATED = '20110825T120549+0200';
     const PRIORITY = 2;

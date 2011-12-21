@@ -53,7 +53,7 @@ class NewsMlParser implements Parser
             $content[] = $element->asXML();
         }
 
-        return str_replace('hl2>', 'h2>', implode("\n", $content));
+        return str_replace('hl2>', 'h4>', implode("\n", $content));
     }
 
     /**
