@@ -14,8 +14,6 @@ use Newscoop\Ingest\Parser;
  */
 class NewsMlParser implements Parser
 {
-    const MEDIA_PRODUCT = 'Photo Dienst D';
-
     /** @var SimpleXMLElement */
     private $xml;
 
@@ -137,7 +135,8 @@ class NewsMlParser implements Parser
      */
     public function isImage()
     {
-        return $this->getProduct() == self::MEDIA_PRODUCT;
+        $mainRole = array_pop($this->xml->xpath('//NewsComponent/Role[@FormalName="Main"]'));
+        return $mainRole && $mainRole->xpath('following::ContentItem/MediaType[@FormalName="Photo"]');
     }
 
     /**
