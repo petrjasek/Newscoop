@@ -82,11 +82,15 @@ class SwissinfoParser implements Parser
 
         $i = 0;
         foreach($main_section_content as $section) {
-            $title = $main_titles[$i];
-            if (isset($title) && $title != "") {
-                $content[]= '<br><b>';
-                $content[]= $title;
-                $content[]= '</b></br>';
+            $title = (string) $main_titles[$i];
+            if (!empty($title)) {
+                if (preg_match('/^<h[2|3|4]>.*<\/h[2|3|4]>/', $title)) {
+                    $content[] = $title;
+                } else {
+                    $content[]= '<p><strong>';
+                    $content[]= $title;
+                    $content[]= '</strong></p>';
+                }
             }
             $content[]= '<p>';
             $content[]= (string) $section;
