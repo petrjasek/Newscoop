@@ -92,9 +92,11 @@ class Admin_CommentController extends Zend_Controller_Action
 
                 $forum = $comment->getForum();
                 $section = $thread->getSection();
+                $profile = $view->url(array('username' => $commenter->getLoginName()), 'user');
                 return array('index' => $index++, 'can' => array('enable' => $acl['enable'], 'edit' => $acl['edit']),
                              'commenter' =>
-                             array('username' => $commenter->getUsername(), 'name' => $commenter->getName(),
+                             array('username' => $commenter->getLoginName(), 'name' => $commenter->getName(),
+                                   'profile' => $profile,
                                    'email' => $commenter->getEmail(),
                                    'avatar' => (string)$view->getAvatar($commenter->getEmail(), array('img_size' => 50,
                                                                                                      'default_img' => 'wavatar')),
@@ -124,7 +126,7 @@ class Admin_CommentController extends Zend_Controller_Action
                              'thread' => array('name' => $article->getName(),
                                                'link' => array
                                                ('edit' => $view->baseUrl("admin/articles/edit.php?") . $view->linkArticleObj($article),
-                                                'get' => $view->baseUrl("admin/articles/get.php?") . $view->linkArticleObj($article)),
+                                                'get' => $view->baseUrl("admin/articles/preview.php?") . $view->linkArticleObj($article)),
                                                'forum' => array('name' => $forum->getName()),
                                                'section' => array('name' => ($section) ? $section->getName() : null)),);
             });

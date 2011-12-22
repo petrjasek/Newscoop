@@ -81,7 +81,9 @@
                                 <img src="{{commenter.avatar}}">
                             </div>
                             <p>
-                                <p><b>{{commenter.username}}</b></p>
+                                {% if (commenter.profile) %}
+                                <p><b><a href="{{ commenter.profile }}" target="_blank">{{commenter.username}}</a></b></p>
+                                {% endif %}
                                 <p class="{% if (commenter.is.banned.name) %}user-blocked-avatar{% endif %}">{{commenter.name}}</p>
                                 <p class="{% if (commenter.is.banned.ip) %}user-blocked-avatar{% endif %}"><a target="_blank" href="{{commenter.trace.ip}}">{{commenter.ip}}</a></p>
                                 <p class="{% if (commenter.is.banned.email) %}user-blocked-avatar{% endif %}"><a href="mailto:{{commenter.email}}">{{commenter.email}}</a></p>
@@ -130,7 +132,7 @@
                     <td>
                         <div class="commentArticleHolder">
                             <p>
-                                <a href="{{thread.link.get}}" class="articleLink">{{thread.name}}</a>
+                                <a href="{{thread.link.get}}" target="_blank">{{thread.name}}</a>
                                 <br>
                                 <span>{{thread.forum.name}}; <b><?php putGS('Section'); ?></b> {{thread.section.name}}</span>
                             </p>

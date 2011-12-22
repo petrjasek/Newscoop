@@ -250,6 +250,16 @@ class Commenter
     }
 
     /**
+     * Get login name of the linked user
+     *
+     * @return string
+     */
+    public function getLoginName()
+    {
+        return $this->getUser() ? $this->getUser()->getUsername() : '';
+    }
+
+    /**
      * Get id of the linked user if there is one
      *
      * @return string
