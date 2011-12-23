@@ -84,6 +84,9 @@ class Admin_CommentController extends Zend_Controller_Action
             {
                 /* var Newscoop\Entity\Comment\Commenter */
                 $commenter = $comment->getCommenter();
+                $user = new MetaUser($commenter->getUser());
+                $image = $user->image(50, 50);
+                
                 $thread = $comment->getThread();
 
                 $articleNo = $comment->getArticleNumber();
@@ -98,8 +101,7 @@ class Admin_CommentController extends Zend_Controller_Action
                              array('username' => $commenter->getLoginName(), 'name' => $commenter->getName(),
                                    'profile' => $profile,
                                    'email' => $commenter->getEmail(),
-                                   'avatar' => (string)$view->getAvatar($commenter->getEmail(), array('img_size' => 50,
-                                                                                                     'default_img' => 'wavatar')),
+                                   'avatar' => $image,
                                    /**
                                     * @todo have this in the commenter entity as a flag isBanned witch is checked when a ban is done
                                     *       for a faster result not having sql checks insides for statements
@@ -158,20 +160,20 @@ class Admin_CommentController extends Zend_Controller_Action
     public function getAllReplies($p_comment_id)
     {
          if(!is_array($p_comment_id)) {
-         	$directReplies = $this->commentRepository->getDirectReplies($p_comment_id);
-         	if(count($directReplies)) {
-         		return array_merge( array($p_comment_id), $this->getAllReplies($directReplies) );
-         	} else {
-         		return array($p_comment_id);
-         	}
+            $directReplies = $this->commentRepository->getDirectReplies($p_comment_id);
+            if(count($directReplies)) {
+                return array_merge( array($p_comment_id), $this->getAllReplies($directReplies) );
+            } else {
+                return array($p_comment_id);
+            }
          } else {
             if(count($p_comment_id) > 1) {
                 return array_merge(
                     $this->getAllReplies(array_pop($p_comment_id)),
-	                $this->getAllReplies($p_comment_id)
-	                );
+                    $this->getAllReplies($p_comment_id)
+                    );
             } else {
-            	return $this->getAllReplies(array_pop($p_comment_id));
+                return $this->getAllReplies(array_pop($p_comment_id));
             }
          }
     }
@@ -200,7 +202,7 @@ class Admin_CommentController extends Zend_Controller_Action
 
         try {
             foreach ($comments as $id) {
-            	$comment = $this->commentRepository->find($id);
+                $comment = $this->commentRepository->find($id);
 
                 if ($status == "deleted") {
                     $msg = getGS('Comment delete by $1 from the article $2 ($3)', Zend_Registry::get('user')->getName(),
