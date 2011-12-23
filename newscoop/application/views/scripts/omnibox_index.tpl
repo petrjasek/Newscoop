@@ -2,104 +2,104 @@
 <div id="ob_wrapper">
 <script type="text/javascript" src="{{ $view->baseUrl('/js/plupload/js/plupload.full.js') }}"></script>
 <div id="ob_main" style="display: none;">
-	<div id="ob_message_wrapper" style="display: none;">
-		<div id="ob_message_close" style="display: none;" class="right"><a href="javascript:omnibox.hideMessage();omnibox.setMessage('');"><img src="{{ $view->baseUrl('/public/css/img/close-button.png') }}"></a></div>
-		<div id="ob_message" style="display: none;"></div>
-		<div class="clear"></div>
-	</div>
-	<div class="clear"></div>
-	{{ if $gimme->user->logged_in }}		
-		{{ if $gimme->article->number && $gimme->article->comments_locked == 0 && $gimme->article->comments_enabled == 1}}
-			<div class="top_title">{{ $view->translate('My comment') }} / {{ $view->translate('Send message to the editorial team') }}</div>
-			<div class="top_user">
-				{{ $view->translate('You are logged in as %s', $gimme->user->name) }}<br><a href="#" onClick="omnibox.logout();">{{ $view->translate('Logout') }}</a><br>
-			</div>
-			<div class="clear"></div>
-			
-			<div style="display: inline;" id="ob_input">
+    <div id="ob_message_wrapper" style="display: none;">
+        <div id="ob_message_close" style="display: none;" class="right"><a href="javascript:omnibox.hideMessage();omnibox.setMessage('');"><img src="{{ $view->baseUrl('/public/css/img/close-button.png') }}"></a></div>
+        <div id="ob_message" style="display: none;"></div>
+        <div class="clear"></div>
+    </div>
+    <div class="clear"></div>
+    {{ if $gimme->user->logged_in }}        
+        {{ if $gimme->article->number && $gimme->article->comments_locked == 0 && $gimme->article->comments_enabled == 1}}
+            <div class="top_title">{{ $view->translate('My comment') }} / {{ $view->translate('Send message to the editorial team') }}</div>
+            <div class="top_user">
+                {{ $view->translate('You are logged in as %s', $gimme->user->name) }}<br><a href="#" onClick="omnibox.logout();">{{ $view->translate('Logout') }}</a><br>
+            </div>
+            <div class="clear"></div>
+            
+            <div style="display: inline;" id="ob_input">
 
-			<div class="radio_container">
-				<input type="radio" name="ob_comment_feedback" id="ob_comment" onClick="omnibox.switchCommentFeedback();" checked="checked">
-				<label for="ob_comment" style="float: none;">{{ $view->translate('Comment on article') }}</label>
-			</div>
-			
-			<div class="radio_container">
-				<input type="radio" name="ob_comment_feedback" id="ob_feedback" onClick="omnibox.switchCommentFeedback();">
-				<label for="ob_feedback" style="float: none;">{{ $view->translate('Send message to the editorial team (is not published)') }}</label>
-			</div>
+            <div class="radio_container">
+                <input type="radio" name="ob_comment_feedback" id="ob_comment" onClick="omnibox.switchCommentFeedback();" checked="checked">
+                <label for="ob_comment" style="float: none;">{{ $view->translate('Comment on article') }}</label>
+            </div>
+            
+            <div class="radio_container">
+                <input type="radio" name="ob_comment_feedback" id="ob_feedback" onClick="omnibox.switchCommentFeedback();">
+                <label for="ob_feedback" style="float: none;">{{ $view->translate('Send message to the editorial team (is not published)') }}</label>
+            </div>
             
             <div class="clear"></div>
-			
-			<div id="ob_comment_text_container" class="text_container" style="display: inline;">
-				<label for="ob_comment_subject" style="float: none;">{{ $view->translate('Subject') }}</label>
-				<input type="text" id="ob_comment_subject" value="" onKeyPress="if (event.keyCode == 13) omnibox.sendComment();"><br>
-				<label for="ob_comment_text" style="float: none;">{{ $view->translate('Comment') }}</label>
-				<textarea name="ob_comment_text" id="ob_comment_text"></textarea><br>
-				<input type="button" class="send_button" value="{{ $view->translate('Publish') }}" onClick="omnibox.sendComment();">
-			</div>
-			
-			<div id="ob_feedback_text_container" class="text_container" style="display: none;">
-				<label for="ob_feedback_subject" style="float: none;">{{ $view->translate('Subject') }}</label>
-				<input type="text" id="ob_feedback_subject" value="" onKeyPress="if (event.keyCode == 13) omnibox.sendFeedback();"><br>
-				<label for="ob_feedback_text" style="float: none;">{{ $view->translate('Message') }}</label>
-				<textarea name="ob_feedback_text" id="ob_feedback_text"></textarea><br>
-				<span id="ob_file_upload_container"></span>
-				<span id="ob_file_info"></span>
-				<input type="button" class="send_button" value="{{ $view->translate('Send') }}" onClick="omnibox.sendFeedback();"><br>
-				<div class="clear"></div>
-				<span id="ob_file_type">{{ $view->translate('Possible formats: pictures (jpg, png, gif), documents (pdf)') }}</span>
-			</div>
-			<div class="clear"></div>
-			
-			</div>
-		{{ else }}
-			<div class="top_title">{{ $view->translate('Send message to the editorial team') }}</div>
-			<div class="top_user">
-				{{ $view->translate('Registered as') }} {{ $gimme->user->name }}<br><a href="#" onClick="omnibox.logout();">{{ $view->translate('Logout') }}</a><br>
-			</div>
-			<div class="clear"></div>
-			
-			<div style="display: inline;" id="ob_input">
-			
-			<div id="ob_feedback_text_container" class="text_container">
-				<label for="ob_feedback_subject" style="float: none;">{{ $view->translate('Subject') }}</label>
-				<input type="text" id="ob_feedback_subject" value="" onKeyPress="if (event.keyCode == 13) omnibox.sendFeedback();"><br>
-				<label for="ob_feedback_text" style="float: none;">{{ $view->translate('Message') }}</label>
-				<textarea name="ob_feedback_text" id="ob_feedback_text"></textarea><br>
-				<span id="ob_file_upload_container"></span>
-				<span id="ob_file_info"></span>
-				<input type="button" class="send_button" value="{{ $view->translate('Send') }}" onClick="omnibox.sendFeedback();"><br>
-				<div class="clear"></div>
-				<span id="ob_file_type">{{ $view->translate('Possible formats: pictures (jpg, png, gif), documents (pdf)') }}</span>
-			</div>
-			<div class="clear"></div>
-			
-			</div>
-		{{ /if }}
-		
-	{{ else }}
-		<div class="top_title">{{ $view->translate('Login') }}</div>
-		<div class="clear"></div>
-		<div class="text_container left half">
-			{{ $view->translate('You have to be registered at TagesWoche in order to comment on articles and send messages directly to the editorial team. Please login or create a free user account on TagesWoche.') }}
-			<br><a href="http://www.tageswoche.ch/de/pages/about/3919/Dialogkultur.htm">{{ $view->translate('login_link_text') }}</a>
-		</div>
+            
+            <div id="ob_comment_text_container" class="text_container" style="display: inline;">
+                <label for="ob_comment_subject" style="float: none;">{{ $view->translate('Subject') }}</label>
+                <input type="text" id="ob_comment_subject" value="" onKeyPress="if (event.keyCode == 13) omnibox.sendComment();"><br>
+                <label for="ob_comment_text" style="float: none;">{{ $view->translate('Comment') }}</label>
+                <textarea name="ob_comment_text" id="ob_comment_text"></textarea><br>
+                <input type="button" class="send_button" value="{{ $view->translate('Publish') }}" onClick="omnibox.sendComment();">
+            </div>
+            
+            <div id="ob_feedback_text_container" class="text_container" style="display: none;">
+                <label for="ob_feedback_subject" style="float: none;">{{ $view->translate('Subject') }}</label>
+                <input type="text" id="ob_feedback_subject" value="" onKeyPress="if (event.keyCode == 13) omnibox.sendFeedback();"><br>
+                <label for="ob_feedback_text" style="float: none;">{{ $view->translate('Message') }}</label>
+                <textarea name="ob_feedback_text" id="ob_feedback_text"></textarea><br>
+                <span id="ob_file_upload_container"></span>
+                <span id="ob_file_info"></span>
+                <input type="button" class="send_button" value="{{ $view->translate('Send') }}" onClick="omnibox.sendFeedback();"><br>
+                <div class="clear"></div>
+                <span id="ob_file_type">{{ $view->translate('Possible formats: pictures (jpg, png, gif), documents (pdf)') }}</span>
+            </div>
+            <div class="clear"></div>
+            
+            </div>
+        {{ else }}
+            <div class="top_title">{{ $view->translate('Send message to the editorial team') }}</div>
+            <div class="top_user">
+                {{ $view->translate('Registered as') }} {{ $gimme->user->name }}<br><a href="#" onClick="omnibox.logout();">{{ $view->translate('Logout') }}</a><br>
+            </div>
+            <div class="clear"></div>
+            
+            <div style="display: inline;" id="ob_input">
+            
+            <div id="ob_feedback_text_container" class="text_container">
+                <label for="ob_feedback_subject" style="float: none;">{{ $view->translate('Subject') }}</label>
+                <input type="text" id="ob_feedback_subject" value="" onKeyPress="if (event.keyCode == 13) omnibox.sendFeedback();"><br>
+                <label for="ob_feedback_text" style="float: none;">{{ $view->translate('Message') }}</label>
+                <textarea name="ob_feedback_text" id="ob_feedback_text"></textarea><br>
+                <span id="ob_file_upload_container"></span>
+                <span id="ob_file_info"></span>
+                <input type="button" class="send_button" value="{{ $view->translate('Send') }}" onClick="omnibox.sendFeedback();"><br>
+                <div class="clear"></div>
+                <span id="ob_file_type">{{ $view->translate('Possible formats: pictures (jpg, png, gif), documents (pdf)') }}</span>
+            </div>
+            <div class="clear"></div>
+            
+            </div>
+        {{ /if }}
+        
+    {{ else }}
+        <div class="top_title">{{ $view->translate('Login') }}</div>
+        <div class="clear"></div>
+        <div class="text_container left half">
+            {{ $view->translate('You have to be registered at TagesWoche in order to comment on articles and send messages directly to the editorial team. Please login or create a free user account on TagesWoche.') }}
+            <br><a href="http://www.tageswoche.ch/de/pages/about/3919/Dialogkultur.htm">{{ $view->translate('login_link_text') }}</a>
+        </div>
                 <form name="login-form" method="post" autocomplete="" onsubmit="omnibox.login();return false;">
-		<div class="text_container right half">
+        <div class="text_container right half">
                         <div class="login_label">{{ $view->translate('E-Mail') }}</div>
-			<input type="text" id="ob_email" name="ob_email" class="small right"><br>
-			<div class="clear"></div>
+            <input type="text" id="ob_email" name="ob_email" class="small right" VCARD_NAME = "vCard.Email"><br>
+            <div class="clear"></div>
                         <div class="login_label">{{ $view->translate('Password') }}</div>
                         <div class="clear"></div>
-			<input type="password" id="ob_password" name="ob_password" class="small right"><br>
-			<div class="clear"></div>
+            <input type="password" id="ob_password" name="ob_password" class="small right"><br>
+            <div class="clear"></div>
                         <input type="submit" class="login_button right" value="{{ $view->translate('Login') }}">
-			<a class="register_link right" href="{{ $view->baseUrl('/register') }}">{{ $view->translate('Register') }}</a>
+            <a class="register_link right" href="{{ $view->baseUrl('/register') }}">{{ $view->translate('Register') }}</a>
             <a class="register_link right" href="{{ $view->baseUrl('/auth/password-restore ') }}">{{ $view->translate('Forgot password') }}</a>
-		</div>
+        </div>
                 </form>
-		<div class="clear"></div>
-	{{ /if }}
+        <div class="clear"></div>
+    {{ /if }}
 </div>
 
 <div id="ob_handle" style="">
@@ -113,9 +113,9 @@
 <script>
 omnibox.initialize();
 {{ if $gimme->article->number && $gimme->article->comments_locked == 0 && $gimme->article->comments_enabled == 1}}
-	omnibox.setType('comment');
+    omnibox.setType('comment');
 {{ else }}
-	omnibox.setType('feedback');
+    omnibox.setType('feedback');
 {{ /if }}
 omnibox.setTranslation('attach_file', '{{ $view->translate("Attach file") }}');
 omnibox.setTranslation('feedback_content_empty', '{{ $view->translate("Feedback content is not filled in.") }}');
