@@ -6,14 +6,20 @@
  * @link http://www.sourcefabric.org
  */
 
+/**
+ * @title TagesWoche Quick Links
+ * @description Quick Links widget.
+ * @homepage http://www.sourcefabric.org
+ * @author Sourcefabric o.p.s.
+ * @version 1.0
+ * @license GPLv3
+ */
 class TageswocheQuickLinks extends Widget
 {
-    protected $title = 'TagesWoche Quick Links';
-
-    protected $url = 'http://www.tageswoche.ch/';
-
+    /* @var array */
     protected $items = array();
 
+    /* @var int */
     protected $current_issue = null;
 
 
@@ -56,7 +62,7 @@ class TageswocheQuickLinks extends Widget
     {
         if (is_null($this->current_issue)) {
             $issue = \Issue::GetCurrentIssue($publication, $language);
-            $this->current_issue = $issue->getIssueId();
+            $this->current_issue = $issue->getIssueNumber();
         }
 
         return $this->current_issue;
