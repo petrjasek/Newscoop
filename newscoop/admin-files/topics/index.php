@@ -26,7 +26,7 @@ echo camp_html_breadcrumbs($crumbs);
 camp_html_display_msgs("0.5em", 0);
 ?>
 
-<form action="" method="post">
+<form method="post">
 <fieldset class="controls">
     <legend><?php putGS("Show languages"); ?></legend>
     <div class="buttons">
@@ -76,6 +76,7 @@ if (count($topics) == 0) { ?>
 </blockquote>
 
 <?php } else { ?>
+<div class="nested-sortable">
 
 <?php
 $level = 0;
@@ -111,7 +112,7 @@ foreach ($topics as $topicPath) {
 ?>
 
         <div class="item"><div>
-            <a class="icon delete" href="<?php p("/$ADMIN/topics/do_del.php?f_topic_delete_id=".$currentTopic->getTopicId()."&amp;f_topic_language_id=$topicLanguageId"); ?>&amp;<?php echo SecurityToken::URLParameter(); ?>" onclick="return confirm('<?php putGS('Are you sure you want to delete the topic $1?', htmlspecialchars($topicName)); ?>');" title="<?php putGS("Delete"); ?>"><span></span>x</a>
+            <a class="icon delete" href="<?php p("/$ADMIN/topics/do_del.php?f_topic_delete_id=".$currentTopic->getTopicId()."&amp;f_topic_language_id=$topicLanguageId"); ?>&amp;<?php echo SecurityToken::URLParameter(); ?>" onclick="return confirm(<?php echo json_encode(getGS("Are you sure you want to delete the topic $1?", $topicName)); ?>);" title="<?php putGS("Delete"); ?>"><span></span>x</a>
             <a class="edit" title="<?php putGS('Edit'); ?>"><?php putGS('Edit'); ?></a>
 
             <span class="open" title="<?php putGS('Click to edit'); ?>">
@@ -167,24 +168,30 @@ foreach ($topics as $topicPath) {
             </form>
             <?php } ?>
         </div></div>
-        <input type="hidden" name="position[<?php echo $currentTopic->getTopicId(); ?>]" />
-
     <?php
     } // foreach
 }
 echo str_repeat('</li></ul>', $level);
 ?>
 
-    <form method="post" action="/<?php echo $ADMIN; ?>/topics/do_order.php">
+</div>
+
+<form method="post" action="<?php echo $this->view->url(array(
+    'module' => 'admin',
+    'controller' => 'topic',
+    'action' => 'save-order',
+)); ?>">
     <?php echo SecurityToken::FormParameter(); ?>
     <input type="hidden" name="languages" value="<?php echo implode('_', $f_show_languages); ?>" />
-<fieldset class="buttons">
-    <input type="submit" name="Save" value="<?php putGS('Save order'); ?>" />
-    <input type="reset" name="Reset" value="<?php putGS('Reset order'); ?>" />
-</fieldset>
+    <input type="hidden" name="tree" value="" />
+
+    <fieldset class="buttons">
+        <input type="submit" name="Save" value="<?php putGS('Save order'); ?>" />
+        <input type="reset" name="Reset" value="<?php putGS('Reset order'); ?>" />
+    </fieldset>
 </form>
 
-<script type="text/javascript"><!--
+<script type="text/javascript">
 /**
  * Check all checkboxes within same fieldset.
  * @param object elem
@@ -243,29 +250,29 @@ $('ul.tree.sortable .item').each(function() {
     }).addClass('closed');
 });
 
+$('ul.tree.sortable li').each(function() {
+    if (!$('> ul', this).length) {
+        $('<ul class="empty"></ul>').appendTo($(this)).sortable({
+            revert: true,
+            distance: 5,
+            connectWith: '.nested-sortable > ul',
+            placeholder: 'placeholder',
+            cursor: 'pointer'
+        });
+    }
+});
+
 // make tree sortable
-var orderChanges = {};
-$('ul.tree.sortable, ul.tree.sortable ul').sortable({
-    revert: 100,
+$('.nested-sortable > ul').sortable({
+    revert: true,
     distance: 5,
-    start: function(event, ui) {
-        $(this).data( 'is-sorting', true );
-        sorting = true;
-        ui.item.addClass('move');
-    },
-    stop: function(event, ui) {
-    	$(this).data( 'is-sorting', false );
-        sorting = false;
-        ui.item.removeClass('move');
-    },
+    placeholder: 'placeholder',
+    cursor: 'pointer',
+    items: 'li',
+    connectWith: '.nested-sortable ul.empty',
     update: function(event, ui) {
         $('fieldset.buttons').addClass('active');
-        var parentId = ui.item.closest('ul').closest('li').attr('id');
-        if (!parentId) {
-            parentId = 'topic_0';
-        }
-        orderChanges[parentId] = ui.item.closest('ul').sortable('toArray');
-    },
+    }
 });
 
 // reset
@@ -274,15 +281,10 @@ $('input:reset').click(function() {
 });
 
 // save
-$('form[action*=do_order]').submit(function(e) {
-    e.preventDefault();
-    callServer(['Topic', 'UpdateOrder'], [
-        orderChanges,
-        ], function(json) {
-            $('fieldset.buttons').removeClass('active');
-            flashMessage('Order saved');
-        });
-    return false;
+$('form[action*=save-order]').submit(function(e) {
+    var tree = $('ul.tree.sortable').clone();
+    tree.find('input,div').detach();
+    $(this).find('input:hidden[name="tree"]').val(tree.html());
 });
 
 // check for changes before reload
@@ -323,7 +325,7 @@ function validate(form)
     return true;
 }
 
---></script>
+</script>
 <?php } ?>
 <?php camp_html_copyright_notice(); ?>
 </body>

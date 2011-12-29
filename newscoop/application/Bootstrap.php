@@ -159,6 +159,9 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
         $container->register('user.search', 'Newscoop\Services\UserSearchService')
             ->addArgument(new sfServiceReference('em'));
 
+        $container->register('tree', 'Newscoop\Tree\TreeService')
+            ->addArgument(new sfServiceReference('em'));
+
         Zend_Registry::set('container', $container);
         return $container;
     }

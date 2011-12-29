@@ -2338,3 +2338,21 @@ abbr {
     border-bottom: 0.1em dotted;
     cursor: help;
 }
+
+ul.tree.sortable li {
+}
+
+.tree.sortable ul {
+    float: left;
+    width: 80%;
+    min-height: 8px;
+    margin: 0 0 0 13px;
+    padding: 0;
+}
+
+.tree.sortable .placeholder {
+    float: left;
+    width: 50%;
+    height: 13px;
+    background-color: #729fcf;
+}
