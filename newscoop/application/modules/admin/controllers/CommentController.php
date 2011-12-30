@@ -125,12 +125,20 @@ class Admin_CommentController extends Zend_Controller_Action
                                                     array('action' => 'update', 'format' => 'json')),
                                                                   'reply' => $view->url(
                                                                       array('action' => 'reply', 'format' => 'json')))),
-                             'thread' => array('name' => $article->getName(),
-                                               'link' => array
-                                               ('edit' => $view->baseUrl("admin/articles/edit.php?") . $view->linkArticleObj($article),
-                                                'get' => $view->baseUrl("admin/articles/preview.php?") . $view->linkArticleObj($article)),
-                                               'forum' => array('name' => $forum->getName()),
-                                               'section' => array('name' => ($section) ? $section->getName() : null)),);
+                             'thread' => array(
+                                 'name' => $article->getName(),
+                                 'link' => array(
+                                     'edit' => $view->baseUrl("admin/articles/edit.php?") . $view->linkArticleObj($article),
+                                     'get' => Admin_CommentController::getFrontendLink($article),
+                                 ),
+                                 'forum' => array(
+                                     'name' => $forum->getName(),
+                                 ),
+                                 'section' => array(
+                                     'name' => ($section) ? $section->getName() : null,
+                                 ),
+                             ),
+                        );
             });
 
         $table->setOption('fnDrawCallback', 'datatableCallback.draw')
@@ -484,6 +492,17 @@ class Admin_CommentController extends Zend_Controller_Action
         }
     }
 
-
-
+    /**
+     * Get frontend link for article
+     *
+     * @param Article $article
+     * @return string
+     */
+    public static function getFrontendLink(\Article $article)
+    {
+        $link = ShortURL::GetURL($article->getPublicationId(), $article->getLanguageId(), null, null, $article->getArticleNumber());
+        $publication = new Publication($article->getPublicationId());
+        $seoFields = $publication->getSeo();
+        return $link . $article->getSEOURLEnd($seoFields, $article->getLanguageId());
+    }
 }
