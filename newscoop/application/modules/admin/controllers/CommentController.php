@@ -245,20 +245,6 @@ class Admin_CommentController extends Zend_Controller_Action
             $comments = array($comments);
         }
 
-        foreach ($comments as $commentId) {
-            if (!$recommended) {
-                continue;
-            }
-
-            $comment = $this->commentRepository->find($commentId);
-            $this->_helper->service->notifyDispatcher("comment.recommended", array(
-                'id' => $comment->getId(),
-                'subject' => $comment->getSubject(),
-                'article' => $comment->getThread()->getName(),
-                'commenter' => $comment->getCommenterName(),
-            ));
-        }
-
         try {
             $this->commentRepository->setRecommended($comments, $recommended);
             $this->commentRepository->flush();
@@ -300,6 +286,12 @@ class Admin_CommentController extends Zend_Controller_Action
         try {
             $comment = $this->commentRepository->save($comment, $values);
             $this->commentRepository->flush();
+            $this->_helper->service->notifyDispatcher("comment.recommended", array(
+                'id' => $comment->getId(),
+                'subject' => $comment->getSubject(),
+                'article' => $comment->getThread()->getName(),
+                'commenter' => $comment->getCommenterName(),
+            ));
         } catch (Exception $e) {
             $this->view->status = $e->getCode();
             $this->view->message = $e->getMessage();

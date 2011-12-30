@@ -75,6 +75,12 @@ class CommentController extends Zend_Controller_Action
 
 			$commentRepository->save($comment, $values);
             $commentRepository->flush();
+            $this->_helper->service->notifyDispatcher("comment.recommended", array(
+                'id' => $comment->getId(),
+                'subject' => $comment->getSubject(),
+                'article' => $comment->getThread()->getName(),
+                'commenter' => $comment->getCommenterName(),
+            ));
             
             $this->view->response = 'OK';
 		}
