@@ -1,11 +1,9 @@
 <?php
 
-require_once('ListObject.php');
-
+require_once __DIR__ . '/ListObject.php';
 
 /**
  * ArticleCommentsList class
- *
  */
 class ArticleCommentsList extends ListObject
 {
@@ -149,6 +147,10 @@ class ArticleCommentsList extends ListObject
                 case 'recommended':
 					if ($value == 'true' || $value == 'false') $parameters[$parameter] = $value;
                     break;
+                case 'section':
+                    $parameters['section'] = is_numeric($value) ? (int) $value : $value->number;
+                    break;
+
                 default:
     				CampTemplate::singleton()->trigger_error("invalid parameter $parameter in list_article_comments", $p_smarty);
     		}
@@ -190,8 +192,10 @@ class ArticleCommentsList extends ListObject
 			if ($parameters['recommended'] == 'false') $this->m_constraints['recommended'] = 0;
 		}
 
+        if (isset($parameters['section'])) {
+            $this->m_constraints['section'] = (int) $parameters['section'];
+        }
+
     	return $parameters;
 	}
 }
-
-?>

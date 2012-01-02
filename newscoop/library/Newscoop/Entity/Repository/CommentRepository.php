@@ -350,6 +350,7 @@ class CommentRepository extends DatatableSource
                         $orx->add($qb->expr()->eq('e.status', $mapper[$value]));
                     }
                     break;
+
                 case 'id':
                 case 'forum':
                 case 'thread':
@@ -358,10 +359,16 @@ class CommentRepository extends DatatableSource
                         $orx->add($qb->expr()->eq("e.$key", $value));
                     }
                     break;
+
                 case 'recommended':
 					foreach ($values as $value) {
                         $orx->add($qb->expr()->eq('e.recommended', $value));
                     }
+                    break;
+
+                case 'section':
+                    $orx->add($qb->expr()->eq('a.sectionId', $values[0]));
+                    break;
             }
             $andx->add($orx);
         }
