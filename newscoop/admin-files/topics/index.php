@@ -255,7 +255,7 @@ $('ul.tree.sortable li').each(function() {
         $('<ul class="empty"></ul>').appendTo($(this)).sortable({
             revert: true,
             distance: 5,
-            connectWith: '.nested-sortable > ul',
+            connectWith: '.nested-sortable ul',
             placeholder: 'placeholder',
             cursor: 'pointer'
         });
@@ -269,7 +269,21 @@ $('.nested-sortable > ul').sortable({
     placeholder: 'placeholder',
     cursor: 'pointer',
     items: 'li',
-    connectWith: '.nested-sortable ul.empty',
+    connectWith: '.nested-sortable ul',
+    start: function(event, ui) {
+        var ul = ui.item.closest('ul');
+        if (ul.hasClass('ui-sortable') || ul.find('> li').not('.placeholder').size() > 1) {
+            return;
+        }
+
+        ui.item.closest('ul').sortable({
+            revert: true,
+            distance: 5,
+            connectWith: '.nested-sortable ul',
+            placeholder: 'placeholder',
+            cursor: 'pointer'
+        });
+    },
     update: function(event, ui) {
         $('fieldset.buttons').addClass('active');
     }
