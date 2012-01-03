@@ -191,6 +191,7 @@ ALTER TABLE `SubsSections` MODIFY COLUMN `IdLanguage` INTEGER UNSIGNED DEFAULT N
 
 -- Tables for context box
 CREATE TABLE IF NOT EXISTS `context_articles` (
+  `id` int(10) NOT NULL AUTO_INCREMENT,
   `fk_context_id` int(10) NOT NULL,
   `fk_article_no` int(10) NOT NULL,
   PRIMARY KEY (`id`)
