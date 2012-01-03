@@ -75,6 +75,10 @@ class Admin_Form_User extends Zend_Form
             'label' => getGS('Public profile'),
         ));
 
+        $this->addElement('checkbox', 'is_verified', array(
+            'label' => getGS('Verified profile'),
+        ));
+
         $this->addElement('multiCheckbox', 'user_type', array(
             'label' => getGS('User Type'),
         ));
@@ -110,6 +114,7 @@ class Admin_Form_User extends Zend_Form
             'status' => $user->isActive(),
             'is_admin' => $user->isAdmin(),
             'is_public' => $user->isPublic(),
+            'is_verified' => $user->getAttribute('is_verified'),
             'user_type' => $types,
             'author' => $user->getAuthorId(),
         ));
