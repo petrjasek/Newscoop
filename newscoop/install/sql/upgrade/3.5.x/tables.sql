@@ -192,7 +192,8 @@ ALTER TABLE `SubsSections` MODIFY COLUMN `IdLanguage` INTEGER UNSIGNED DEFAULT N
 -- Tables for context box
 CREATE TABLE IF NOT EXISTS `context_articles` (
   `fk_context_id` int(10) NOT NULL,
-  `fk_article_no` int(10) NOT NULL
+  `fk_article_no` int(10) NOT NULL,
+  PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 

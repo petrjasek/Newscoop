@@ -70,13 +70,13 @@ function checkAddForm(form) {
 <TR>
 	<TD ALIGN="RIGHT" ><?php  putGS("Description"); ?>:</TD>
 	<TD>
-	<INPUT TYPE="TEXT" NAME="f_image_description" VALUE="Image <?php  p($maxId); ?>" SIZE="32" class="input_text" alt="blank" emsg="<?php putGS("Please enter a description for the image."); ?>">
+	<INPUT TYPE="TEXT" NAME="f_image_description" VALUE="" SIZE="32" class="input_text" alt="blank" emsg="<?php putGS("Please enter a description for the image."); ?>">
 	</TD>
 </TR>
 <TR>
 	<TD ALIGN="RIGHT" ><?php  putGS("Photographer"); ?>:</TD>
 	<TD>
-	<INPUT TYPE="TEXT" NAME="f_image_photographer" SIZE="32" VALUE="<?php echo $g_user->getRealName(); ?>" class="input_text">
+	<INPUT TYPE="TEXT" NAME="f_image_photographer" SIZE="32" VALUE="" class="input_text">
 	</TD>
 </TR>
 <TR>
