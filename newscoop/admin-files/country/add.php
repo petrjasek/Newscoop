@@ -14,6 +14,8 @@ $crumbs[] = array(getGS("Countries"), "/$ADMIN/country/");
 $crumbs[] = array(getGS("Add new country"), "");
 echo camp_html_breadcrumbs($crumbs);
 
+?><script>document.title += " - <?php echo(getGS('Add new country')); ?>";</script><?php
+
 ?>
 
 <P>

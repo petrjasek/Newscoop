@@ -191,6 +191,8 @@ if ($f_publication_id > 0 && $f_issue_number && $f_section_number) {
     echo camp_html_breadcrumbs($crumbs);
 }
 
+?><script>document.title += " - <?php echo(getGS('Article').': '.$articleObj->getName()); ?>";</script><?php
+
 function parseTextBody($text, $articleNumber)
 {
     // Subheads

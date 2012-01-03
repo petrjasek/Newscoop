@@ -25,6 +25,8 @@ $crumbs[] = array(getGS("Configure"), "");
 $crumbs[] = array(getGS("Countries"), "");
 echo camp_html_breadcrumbs($crumbs);
 
+?><script>document.title += " - <?php echo(getGS('Countries')); ?>";</script><?php
+
 ?>
 
 <P>

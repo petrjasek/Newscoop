@@ -141,6 +141,9 @@ $crumbs[] = array(getGS("Configure"), "");
 $crumbs[] = array(getGS("Authors"), "");
 $breadcrumbs = camp_html_breadcrumbs($crumbs);
 echo $breadcrumbs;
+
+?><script>document.title += " - <?php echo(getGS('Authors')); ?>";</script><?php
+
 ?>
 
 <?php include dirname(__FILE__) . '/../javascript_common.php'; ?>

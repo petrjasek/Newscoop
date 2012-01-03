@@ -23,6 +23,8 @@ $crumbs[] = array(getGS("Configure"), "");
 $crumbs[] = array(getGS("Topics"), "");
 echo camp_html_breadcrumbs($crumbs);
 
+?><script>document.title += " - <?php echo(getGS('Topics')); ?>";</script><?php
+
 camp_html_display_msgs("0.5em", 0);
 ?>
 
@@ -255,7 +257,7 @@ $('ul.tree.sortable li').each(function() {
         $('<ul class="empty"></ul>').appendTo($(this)).sortable({
             revert: true,
             distance: 5,
-            connectWith: '.nested-sortable ul',
+            connectWith: '.nested-sortable > ul',
             placeholder: 'placeholder',
             cursor: 'pointer'
         });
@@ -269,21 +271,7 @@ $('.nested-sortable > ul').sortable({
     placeholder: 'placeholder',
     cursor: 'pointer',
     items: 'li',
-    connectWith: '.nested-sortable ul',
-    start: function(event, ui) {
-        var ul = ui.item.closest('ul');
-        if (ul.hasClass('ui-sortable') || ul.find('> li').not('.placeholder').size() > 1) {
-            return;
-        }
-
-        ui.item.closest('ul').sortable({
-            revert: true,
-            distance: 5,
-            connectWith: '.nested-sortable ul',
-            placeholder: 'placeholder',
-            cursor: 'pointer'
-        });
-    },
+    connectWith: '.nested-sortable ul.empty',
     update: function(event, ui) {
         $('fieldset.buttons').addClass('active');
     }

@@ -49,6 +49,7 @@ $publish_hour = (date("H") + 1);
 $publish_min = "00";
 
 camp_html_content_top(getGS('Change issue details'), array('Pub' => $publicationObj, 'Issue' => $issueObj), true, true);
+?><script>document.title += " - <?php echo(getGS('Change issue details')); ?>";</script><?php
 
 $url_args1 = "Pub=$Pub";
 $url_args2 = $url_args1."&Issue=$Issue&Language=$Language";

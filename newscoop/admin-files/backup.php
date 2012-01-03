@@ -135,6 +135,8 @@ $crumbs[] = array(getGS("Backup/Restore"), "");
 $breadcrumbs = camp_html_breadcrumbs($crumbs);
 echo $breadcrumbs;
 
+?><script>document.title += " - <?php echo(getGS('Backup/Restore')); ?>";</script><?php
+
 
 // view template
 ?>

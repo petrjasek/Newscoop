@@ -7,6 +7,7 @@ require_once LIBS_DIR . '/ImageList/ImageList.php';
 require_once LIBS_DIR . '/MediaList/MediaList.php';
 
 camp_html_content_top(getGS('Media Archive'), NULL);
+?><script>document.title += " - <?php echo(getGS('Media Archive')); ?>";</script><?php
 ?>
 
 <?php camp_html_display_msgs(); ?>

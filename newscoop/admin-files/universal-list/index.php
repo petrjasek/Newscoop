@@ -16,6 +16,7 @@ if (isset($_SESSION['f_language_selected'])) {
 $f_language_selected = (int)camp_session_get('f_language_selected', 0);
 
 camp_html_content_top(getGS('Search'), NULL);
+?><script>document.title += " - <?php echo(getGS('Search')); ?>";</script><?php
 
 // set up
 $articlelist = new ArticleList();

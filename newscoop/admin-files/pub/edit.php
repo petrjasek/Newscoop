@@ -34,6 +34,7 @@ if (!$pubTimeUnit->exists()) {
 include_once($GLOBALS['g_campsiteDir']."/$ADMIN_DIR/javascript_common.php");
 
 echo camp_html_content_top(getGS("Configure publication"), array("Pub" => $publicationObj));
+?><script>document.title += " - <?php echo(getGS('Configure publication')); ?>";</script><?php
 ?>
 
 <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="1" class="action_buttons" style="padding-top: 5px;">

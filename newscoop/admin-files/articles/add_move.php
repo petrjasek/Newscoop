@@ -67,6 +67,8 @@ $crumbs[] = array(getGS("Actions"), "");
 $crumbs[] = array(getGS("Add new article"), "");
 echo camp_html_breadcrumbs($crumbs);
 
+?><script>document.title += " - <?php echo(getGS('Add new article')); ?>";</script><?php
+
 ?>
 
 <?php

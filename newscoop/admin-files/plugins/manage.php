@@ -95,6 +95,8 @@ $crumbs[] = array(getGS("Plugins"), "");
 $crumbs[] = array(getGS("Manage"), "");
 echo camp_html_breadcrumbs($crumbs);
 
+?><script>document.title += " - <?php echo(getGS('Plugins')); ?>";</script><?php
+
 camp_html_display_msgs();
 ?>
 <P>

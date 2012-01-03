@@ -17,6 +17,8 @@ $crumbs[] = array(getGS("Add new article type"), "");
 echo camp_html_breadcrumbs($crumbs);
 include_once($GLOBALS['g_campsiteDir']."/$ADMIN_DIR/javascript_common.php");
 
+?><script>document.title += " - <?php echo(getGS('Add new article type')); ?>";</script><?php
+
 ?>
 <P>
 <FORM NAME="dialog" METHOD="POST" ACTION="/<?php echo $ADMIN; ?>/article_types/do_add.php" onsubmit="return <?php camp_html_fvalidate(); ?>;">

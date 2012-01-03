@@ -3,7 +3,14 @@
 <html lang="<?php echo $this->locale; ?>" dir="ltr">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <?php echo $this->headTitle(); ?>
+    <?php
+        if ($this->legacy) {
+            $title = '';
+        } else {
+            $title = strip_tags($this->placeholder('title'));
+        }
+    ?>
+    <?php echo $this->headTitle($title); ?>
 
     <meta http-equiv="Expires" content="now" />
 

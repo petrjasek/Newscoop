@@ -18,6 +18,8 @@ $crumbs = array();
 $crumbs[] = array(getGS("Configure"), "");
 $crumbs[] = array(getGS("Article Types"), "");
 
+?><script>document.title += " - <?php echo(getGS('Article Types')); ?>";</script><?php
+
 echo camp_html_breadcrumbs($crumbs);
 include_once($GLOBALS['g_campsiteDir']."/$ADMIN_DIR/javascript_common.php");
 ?>

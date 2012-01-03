@@ -255,6 +255,8 @@ $crumbs[] = array(getGS("Actions"), "");
 $crumbs[] = array(getGS("Import XML"), "");
 echo camp_html_breadcrumbs($crumbs);
 
+?><script>document.title += " - <?php echo(getGS('Import XML')); ?>";</script><?php
+
 ?>
 
 <?php camp_html_display_msgs(); ?>

@@ -18,6 +18,7 @@ $numPublications = Publication::GetNumPublications();
 $pager = new SimplePager($numPublications, $ItemsPerPage, "PubOffs", "index.php?");
 
 camp_html_content_top(getGS('Publication List'), null);
+?><script>document.title += " - <?php echo(getGS('Publication List')); ?>";</script><?php
 
 if ($g_user->hasPermission("ManagePub") && SaaS::singleton()->hasPermission("AddPub")) { ?>
 <P>

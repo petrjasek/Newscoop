@@ -18,6 +18,8 @@ $crumbs[] = array("Configure", "");
 $crumbs[] = array("Localizer", "");
 echo camp_html_breadcrumbs($crumbs);
 
+?><script>document.title += " - <?php echo(getGS('Localizer')); ?>";</script><?php
+
 require_once("translate.php");
 translationForm($_REQUEST);
 

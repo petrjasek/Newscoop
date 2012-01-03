@@ -18,6 +18,8 @@ $crumbs[] = array(getGS("Configure"), "");
 $crumbs[] = array(getGS("System Preferences"), "");
 echo camp_html_breadcrumbs($crumbs);
 
+?><script>document.title += " - <?php echo(getGS('System Preferences')); ?>";</script><?php
+
 include_once($GLOBALS['g_campsiteDir']."/$ADMIN_DIR/javascript_common.php");
 
 $htmlFormData['SiteTitle'] = htmlspecialchars(SystemPref::Get("SiteTitle"));
