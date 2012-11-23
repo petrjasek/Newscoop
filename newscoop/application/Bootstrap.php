@@ -17,33 +17,8 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
 {
     protected function _initAutoloader()
     {
-        $options = $this->getOptions();
-        set_include_path(implode(PATH_SEPARATOR, array_map('realpath', $options['autoloader']['dirs'])) . PATH_SEPARATOR . get_include_path());
-        $autoloader = Zend_Loader_Autoloader::getInstance();
-        $autoloader->setFallbackAutoloader(TRUE);
-
-        // autoload symfony service container
-        $autoloader->pushAutoloader(function($class) {
-            require_once APPLICATION_PATH . "/../library/fabpot-dependency-injection-07ff9ba/lib/{$class}.php";
-        }, 'sfService');
-
-        // autoload symfony event dispatcher
-        $autoloader->pushAutoloader(function($class) {
-            require_once APPLICATION_PATH . "/../library/fabpot-event-dispatcher-782a5ef/lib/{$class}.php";
-        }, 'sfEvent');
-
-        // fix adodb loading error
-        $autoloader->pushAutoloader(function($class) {
-            return;
-        }, 'ADO');
-
-        $autoloader->pushAutoloader(function($class) {
-            require_once 'smarty3/sysplugins/' . strtolower($class) . '.php';
-        }, 'Smarty');
-
         $GLOBALS['g_campsiteDir'] = realpath(APPLICATION_PATH . '/../');
-
-        return $autoloader;
+        return;
     }
 
     protected function _initSession()
@@ -52,6 +27,7 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
         if (!empty($options['session'])) {
             Zend_Session::setOptions($options['session']);
         }
+
         Zend_Session::start();
 
         foreach ($_COOKIE as $name => $value) { // remove unused cookies
@@ -121,7 +97,7 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
             ->setConfigurator(function($service) use ($container) {
                 foreach ($container->getParameter('listener') as $listener) {
                     $listenerService = $container->getService($listener);
-                    $listenerParams = $container->getParameter($listener);
+                    $listenerParams = $container->getParameter(str_replace('.', '_', $listener));
                     foreach ((array) $listenerParams['events'] as $event) {
                         $service->connect($event, array($listenerService, 'update'));
                     }
@@ -192,6 +168,18 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
         $container->register('image.search', 'Newscoop\Image\ImageSearchService')
             ->addArgument(new sfServiceReference('em'));
 
+        $container->register('storage.adapter', 'Zend_Cloud_StorageService_Adapter_FileSystem')
+            ->addArgument(array(
+                Zend_Cloud_StorageService_Adapter_FileSystem::LOCAL_DIRECTORY => APPLICATION_PATH . '/..',
+            ));
+
+        $container->register('storage', 'Newscoop\Storage\StorageService')
+            ->addArgument(new sfServiceReference('storage.adapter'));
+
+        $container->register('image.update-storage', 'Newscoop\Image\UpdateStorageService')
+            ->addArgument(new sfServiceReference('em'))
+            ->addArgument(new sfServiceReference('storage'));
+
         $container->register('package', 'Newscoop\Package\PackageService')
             ->addArgument(new sfServiceReference('em'))
             ->addArgument(new sfServiceReference('image'));
@@ -213,6 +201,16 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
         $container->register('webcode', 'Newscoop\WebcodeFacade')
             ->addArgument(new sfServiceReference('em'))
             ->addArgument(new sfServiceReference('random'));
+
+        $container->register('http.client.factory', 'Newscoop\Http\ClientFactory');
+
+        $container->register('search.index', 'Newscoop\Search\SolrIndex')
+            ->addArgument(new sfServiceReference('http.client.factory'))
+            ->addArgument('%config%');
+
+        $container->register('search.indexer.article', 'Newscoop\Search\ArticleIndexer')
+            ->addArgument(new sfServiceReference('em'))
+            ->addArgument(new sfServiceReference('search.index'));
 
         Zend_Registry::set('container', $container);
         return $container;
@@ -318,6 +316,18 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
                      'subscription-ip-rest',
                  ),
              )));
+
+        $router->addRoute(
+            'author',
+            new Zend_Controller_Router_Route(
+                'author/:author',
+                array(
+                    'module' => 'default',
+                    'controller' => 'author',
+                    'action' => 'profile',
+                )
+            )
+        );
     }
 
     protected function _initActionHelpers()

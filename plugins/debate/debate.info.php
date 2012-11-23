@@ -78,8 +78,10 @@ if (!defined('PLUGIN_DEBATE_FUNCTIONS')) {
         $res = $g_ado_db->execute("SELECT * FROM `liveuser_groups` WHERE `group_define_name` = 'Administrator'");
         $row = $res->FetchRow();
         if ($row) {
-            $g_ado_db->execute("INSERT INTO `acl_rule`(`action`, `resource`, `role_id`, `type`)
-    			VALUES('admin', 'plugin-debate', '{$row['role_id']}', 'allow')");
+            $g_ado_db->execute("
+                INSERT IGNORE INTO `acl_rule`(`action`, `resource`, `role_id`, `type`)
+                VALUES('admin', 'plugin-debate', '{$row['role_id']}', 'allow')
+            ");
         }
     }
 

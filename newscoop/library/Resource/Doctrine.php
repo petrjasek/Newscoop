@@ -56,17 +56,13 @@ class Resource_Doctrine extends \Zend_Application_Resource_ResourceAbstract
         $config->setQueryCacheImpl($cache);
 
         $config_file = APPLICATION_PATH . '/../conf/database_conf.php';
-        if (empty($Campsite) && file_exists($config_file)) {
+        if (empty($Campsite) && is_readable($config_file)) {
             require_once $config_file;
         }
 
         // set database
         $database = array(
             'driver' => 'pdo_mysql',
-            'host' => $Campsite['DATABASE_SERVER_ADDRESS'],
-            'dbname' => $Campsite['DATABASE_NAME'],
-            'user' => $Campsite['DATABASE_USER'],
-            'password' => $Campsite['DATABASE_PASSWORD'],
             'driverOptions' => array(
                 1002 => "SET NAMES 'UTF8'",
             ),
@@ -74,10 +70,22 @@ class Resource_Doctrine extends \Zend_Application_Resource_ResourceAbstract
 
         if (isset($options['database'])) {
             $database = $options['database'];
+        } else {
+            $database += array(
+                'host' => $Campsite['DATABASE_SERVER_ADDRESS'],
+                'dbname' => $Campsite['DATABASE_NAME'],
+                'user' => $Campsite['DATABASE_USER'],
+                'password' => $Campsite['DATABASE_PASSWORD'],
+            );
         }
 
-        foreach ($options['functions'] as $function => $value)
+        foreach ($options['functions'] as $function => $value) {
             $config->addCustomNumericFunction(strtoupper($function), $value);
+        }
+
+        if (APPLICATION_ENV !== 'production') {
+            //$config->setSQLLogger(new Doctrine\DBAL\Logging\EchoSQLLogger());
+        }
 
         $this->em = EntityManager::create($database, $config);
         return $this->em;
