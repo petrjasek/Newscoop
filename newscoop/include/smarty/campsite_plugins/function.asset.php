@@ -14,18 +14,18 @@ use Assetic\AssetWriter;
  * Get static url for given asset
  *
  * @param array $params
- * @param object $smarty
+ * @param Smarty_Internal_Template $template
  * @return string
  */
-function smarty_function_asset($params, $smarty)
+function smarty_function_asset($params, $template)
 {
-    define('STATIC_DIR', APPLICATION_PATH . '/../static');
-    define('STATIC_URL', '/static');
+    defined('STATIC_DIR') || define('STATIC_DIR', APPLICATION_PATH . '/../static');
+    defined('STATIC_URL') || define('STATIC_URL', '/static');
 
-    if (!array_key_exists($params['root'])) {
-        $resource = $smarty->template_resource;
-        $filename = $smarty->smarty->_current_file;
-        $params['root'] = substr($filename, 0, -1 * strlen($resource));
+    if (!array_key_exists('root', $params)) {
+        $params['root'] = realpath($template->source->resource)
+            ? dirname($template->source->resource)
+            : substr($template->source->filepath, 0, -1 * strlen($template->source->resource));
     }
 
     switch (true) {
@@ -55,5 +55,5 @@ function smarty_function_asset($params, $smarty)
         $writer->writeAsset($asset);
     }
 
-    return $smarty->getTemplateVars('view')->baseUrl(STATIC_URL . '/' . $asset->getTargetPath());
+    return $template->smarty->getTemplateVars('view')->baseUrl(STATIC_URL . '/' . $asset->getTargetPath());
 }
