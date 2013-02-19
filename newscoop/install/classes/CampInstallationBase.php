@@ -784,40 +784,26 @@ XML;
         $session = CampSession::singleton();
         $dbData = $session->getData('config.db', 'installation');
 
-        $template = CampTemplate::singleton();
-        $template->assign('DATABASE_SERVER_ADDRESS', $dbData['hostname']);
-        $template->assign('DATABASE_SERVER_PORT', $dbData['hostport']);
-        $template->assign('DATABASE_NAME', $dbData['database']);
-        $template->assign('DATABASE_USER', $dbData['username']);
-        $template->assign('DATABASE_PASSWORD', $dbData['userpass']);
+        $config = new \Newscoop\Install\InstallConfig();
+        $config->db = array(
+            'host' => $dbData['hostname'],
+            'port' => $dbData['hostport'],
+            'dbname' => $dbData['database'],
+            'user' => $dbData['username'],
+            'password' => $dbData['userpass'],
+        );
 
-        $buffer1 = $template->fetch('_configuration.tpl');
-        $buffer1 = preg_replace('/#{#{/', '{{', $buffer1);
-        $buffer1 = preg_replace('/#}#}/', '}}', $buffer1);
-
-        $buffer2 = $template->fetch('_database_conf.tpl');
-
-        $path1 = CS_PATH_CONFIG.DIR_SEP.'configuration.php';
-        $path2 = CS_PATH_CONFIG.DIR_SEP.'database_conf.php';
-        if (file_exists($path1) && file_exists($path2)) {
-            $isConfigWritable = is_writable($path1);
-            $isDBConfigWritable = is_writable($path2);
-        } else {
-            $isConfigWritable = is_writable(CS_PATH_CONFIG);
-            $isDBConfigWritable = $isConfigWritable;
-        }
-
-        if (!$isConfigWritable || !$isDBConfigWritable) {
+        try {
+            $path = CS_PATH_CONFIG . '/database_conf.php';
+            $writer = new \Newscoop\Install\ConfigWriter();
+            $writer->write($config, $path);
+        } catch (RuntimeException $e) {
             $this->m_step = 'mainconfig';
             $this->m_message = 'Error: Could not write the configuration file.';
             return false;
         }
 
-        file_put_contents($path1, $buffer1);
-        file_put_contents($path2, $buffer2);
-        @chmod($path2, 0600);
-
-        require_once $path2; // load saved db config for next steps
+        require_once $path; // load saved db config for next steps
 
         // create images and files directories
         CampInstallationBase::CreateDirectory($GLOBALS['g_campsiteDir'].DIR_SEP.'images');
