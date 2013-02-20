@@ -11,6 +11,7 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use Symfony\Component\Console;
 use Symfony\Component\Console\Input\InputOption;
+use Newscoop\Filesystem;
 use Newscoop\Install\InstallConfig;
 use Newscoop\Install\ConfigWriter;
 use Newscoop\Install\ConnectionManager;
@@ -23,7 +24,7 @@ class InstallCommand extends Console\Command\Command
     const ADMIN_PASSWORD = 'admin-password';
     const ADMIN_EMAIL = 'admin-email';
     const SITE_ALIAS = 'site-alias';
-    const TEMPLATE_SET = 'template-set';
+    const TEMPLATE_SET = 'theme-set';
     const DB_OVERWRITE = 'overwrite-db';
     const DB_NAME = 'db-name';
     const DB_HOST = 'db-host';
@@ -41,7 +42,7 @@ class InstallCommand extends Console\Command\Command
         $this->addOption(self::ADMIN_PASSWORD, null, InputOption::VALUE_OPTIONAL, 'Admin password', 'admin');
         $this->addOption(self::ADMIN_EMAIL, null, InputOption::VALUE_OPTIONAL, 'Admin email', 'admin@localhost');
         $this->addOption(self::SITE_ALIAS, null, InputOption::VALUE_OPTIONAL, 'Site alias', 'localhost');
-        $this->addOption(self::TEMPLATE_SET, null, InputOption::VALUE_OPTIONAL, 'Template set', 'the_new_custodian');
+        $this->addOption(self::TEMPLATE_SET, null, InputOption::VALUE_OPTIONAL, 'Theme set', 'the_new_custodian');
         $this->addOption(self::DB_OVERWRITE, null, InputOption::VALUE_OPTIONAL, 'Overwrite database', false);
         $this->addOption(self::DB_NAME, null, InputOption::VALUE_OPTIONAL, 'Database name', 'newscoop');
         $this->addOption(self::DB_HOST, null, InputOption::VALUE_OPTIONAL, 'Database host', 'localhost');
@@ -137,7 +138,7 @@ class InstallCommand extends Console\Command\Command
 
     private function installTemplates($set)
     {
-        $themePath = $this->copyTemplates($set);
+        $this->clearAssignedTemplates($set);
         $this->copyData($set);
 
         $resourceId = new \Newscoop\Service\Resource\ResourceId(__CLASS__);
@@ -145,21 +146,23 @@ class InstallCommand extends Console\Command\Command
         $publicationService = $resourceId->getService(\Newscoop\Service\IPublicationService::NAME);
 
         foreach ($themeService->getUnassignedThemes() as $theme) {
+            if (basename($theme->getPath()) !== $set) {
+                continue;
+            }
+
         	foreach ($publicationService->getEntities() as $publication) {
         		$themeService->assignTheme($theme, $publication);
         	}
         }
+
+        $this->getHelper('container')->getService('image.rendition')->reloadRenditions();
     }
 
-    private function copyTemplates($set)
+    private function clearAssignedTemplates()
     {
-        return;
-        $source = APPLICATION_PATH . '/../install/sample_templates/' . $set . '/templates';
-        $dest = APPLICATION_PATH . '/../themes/unassigned/' . uniqid($set . '_');
-
-        mkdir($dest);
-        $this->copyr($source, $dest);
-        return $dest;
+        foreach (glob(APPLICATION_PATH . '/../themes/publication_*') as $path) {
+            Filesystem::unlinkr($path);
+        }
     }
 
     private function copyData($set)
@@ -167,27 +170,7 @@ class InstallCommand extends Console\Command\Command
         foreach (array('files', 'images') as $dir) {
             $source = APPLICATION_PATH . '/../install/sample_data/' . $dir;
             $dest = APPLICATION_PATH . '/../' . $dir;
-            $this->copyr($source, $dest);
-        }
-    }
-
-    private function copyr($source, $dest)
-    {
-        $iterator = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($source, RecursiveDirectoryIterator::SKIP_DOTS),
-            RecursiveIteratorIterator::SELF_FIRST
-        );
-
-        foreach ($iterator as $item) {
-            if (realpath($dest . '/' . $iterator->getSubPathName())) {
-                continue;
-            }
-
-            if ($item->isDir()) {
-                mkdir($dest . '/' . $iterator->getSubPathName());
-            } else {
-                copy($item, $dest . '/' . $iterator->getSubPathName());
-            }
+            Filesystem::copyr($source, $dest);
         }
     }
 
