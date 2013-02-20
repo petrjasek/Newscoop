@@ -19,4 +19,24 @@ if (strlen($_SERVER['SCRIPT_NAME']) >= 6 && substr($_SERVER['SCRIPT_NAME'], 0, 6
     $_SERVER['SCRIPT_NAME'] = '/admin.php';
 }
 
+if (empty($_SERVER['REQUEST_TIME_FLOAT'])) {
+    $_SERVER['REQUEST_TIME_FLOAT'] = microtime(true);
+}
+
+// logs requests calling exit
+register_shutdown_function(function () {
+    file_put_contents(
+        'php://stdout',
+        sprintf(
+            "[%s] %s:%s [%d]: %s (generated in %.3fs)\n",
+            date('D M d H:i:s Y', $_SERVER['REQUEST_TIME']),
+            $_SERVER['REMOTE_ADDR'],
+            $_SERVER['REMOTE_PORT'],
+            200,
+            $_SERVER['REQUEST_URI'],
+            microtime(true) - $_SERVER['REQUEST_TIME_FLOAT']
+        )
+    );
+});
+
 require __DIR__ . '/public/index.php';
