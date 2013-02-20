@@ -37,6 +37,11 @@ class InstallConfig
     public $alias = 'localhost:9000';
 
     /**
+     * @var bool
+     */
+    public $overwrite_database = false;
+
+    /**
      * @var array
      */
     public $db = array(

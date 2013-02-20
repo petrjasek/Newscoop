@@ -140,13 +140,10 @@ final class CampInstallation extends CampInstallationBase
         $config_db = $session->getData('config.db', 'installation');
 
         $files = array();
-        if ($handle = opendir('./sample_templates'))
-        {
-            while (false !== ($file = readdir($handle))) {
-                if ($file != '.' && $file != '..' && is_dir('./sample_templates/' . $file))
-                    $files[] = $file;
+        foreach (new FilesystemIterator(__DIR__ . '/../sample_templates', FilesystemIterator::SKIP_DOTS) as $item) {
+            if ($item->isDir()) {
+                $files[] = $item->getBasename();
             }
-            closedir($handle);
         }
 
         $tpl->assign('sample_templates', $files);

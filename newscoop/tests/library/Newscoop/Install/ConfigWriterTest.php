@@ -9,7 +9,7 @@ namespace Newscoop\Install;
 
 /**
  */
-class ConfigWriterTest extends \PHPUnit_Framework_TestCase
+class ConfigWriterTest extends \TestCase
 {
     protected $writer;
 

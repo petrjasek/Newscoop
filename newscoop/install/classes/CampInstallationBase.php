@@ -14,6 +14,7 @@ use Newscoop\Entity\Resource;
 use Newscoop\Service\IThemeManagementService;
 use Newscoop\Service\IPublicationService;
 use Newscoop\Service\Implementation\ThemeManagementServiceLocal;
+use Newscoop\Install\ConnectionManager;
 
 global $g_db;
 
@@ -209,47 +210,23 @@ class CampInstallationBase
             'port' => $db_hostport,
         );
 
-        $g_db = $this->getTestDbConnection($connectionParams);
-
-        if (!$g_db->isConnected(true)) {
-            $error = true;
-        } else {
-            $isDbEmpty = TRUE;
-
-            $selectDb = $g_db->hasDatabase($db_database);
-            if ($selectDb) {
-                $g_db = $this->getDbConnection($connectionParams);
-                $dbTables = $g_db->GetAll('SHOW TABLES');
-                $isDbEmpty = empty($dbTables) ? TRUE : FALSE;
-            }
-
-            if (!$isDbEmpty && !$db_overwrite) {
-                $this->m_step = 'database';
-                $this->m_overwriteDb = true;
-                $this->m_message = '<p>There is already a database named <i>' . $db_database . '</i>.</p><p>If you are sure to overwrite it, check <i>Yes</i> for the option below. If not, just change the <i>Database Name</i> and continue.</p>';
-                $this->m_config['database'] = array(
-                    'hostname' => $db_hostname,
-                    'hostport' => $db_hostport,
-                    'username' => $db_username,
-                    'userpass' => $db_userpass,
-                    'database' => $db_database
-                );
-                $session->unsetData('config.db', 'installation');
-                $session->setData('config.db', $this->m_config['database'], 'installation', true);
-                return false;
-            }
-        }
-
-        if (!$error && !$selectDb) {
-            try {
-                $g_db->createDatabase($db_database);
-                $g_db = $this->getDbConnection($connectionParams);
-            } catch (\Exception $e) {
-                $error = true;
-            }
-        }
-
-        if ($error == true) {
+        try {
+            $g_db = $this->getDbConnection($connectionParams, $db_overwrite);
+        } catch (Newscoop\Install\InstallException $e) {
+            $this->m_step = 'database';
+            $this->m_overwriteDb = true;
+            $this->m_message = '<p>There is already a database named <i>' . $db_database . '</i>.</p><p>If you are sure to overwrite it, check <i>Yes</i> for the option below. If not, just change the <i>Database Name</i> and continue.</p>';
+            $this->m_config['database'] = array(
+                'hostname' => $db_hostname,
+                'hostport' => $db_hostport,
+                'username' => $db_username,
+                'userpass' => $db_userpass,
+                'database' => $db_database
+            );
+            $session->unsetData('config.db', 'installation');
+            $session->setData('config.db', $this->m_config['database'], 'installation', true);
+            return false;
+        } catch (Exception $e) {
             $this->m_step = 'database';
             $this->m_message = 'Error: Database parameters invalid. Could not '
                 . 'connect to database server.';
@@ -375,30 +352,18 @@ class CampInstallationBase
      * Get database connection
      *
      * @param array $params
+     * @param bool $overwrite
      * @return Newscoop\Doctrine\AdoDbAdapter
      */
-    private function getDbConnection(array $params)
+    private function getDbConnection(array $params, $overwrite = false)
     {
         $params = array_merge($params, array(
             'driver' => 'pdo_mysql',
             'charset' => 'UTF8',
         ));
 
-        $config = new \Doctrine\DBAL\Configuration();
-        $connection = \Doctrine\DBAL\DriverManager::getConnection($params, $config);
+        $connection = ConnectionManager::getConnection($params, $overwrite);
         return new \Newscoop\Doctrine\AdoDbAdapter($connection);
-    }
-
-    /**
-     * Get test database connection
-     *
-     * @param array $params
-     * @return Newscoop\Doctrine\AdoDbAdapter
-     */
-    private function getTestDbConnection(array $params)
-    {
-        unset($params['dbname']);
-        return $this->getDbConnection($params);
     }
 
     private function generalConfiguration($p_input)

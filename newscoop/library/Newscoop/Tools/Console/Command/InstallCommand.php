@@ -13,6 +13,7 @@ use Symfony\Component\Console;
 use Symfony\Component\Console\Input\InputOption;
 use Newscoop\Install\InstallConfig;
 use Newscoop\Install\ConfigWriter;
+use Newscoop\Install\ConnectionManager;
 
 /**
  * Install Newscoop Command
@@ -23,6 +24,12 @@ class InstallCommand extends Console\Command\Command
     const ADMIN_EMAIL = 'admin-email';
     const SITE_ALIAS = 'site-alias';
     const TEMPLATE_SET = 'template-set';
+    const DB_OVERWRITE = 'overwrite-db';
+    const DB_NAME = 'db-name';
+    const DB_HOST = 'db-host';
+    const DB_PORT = 'db-port';
+    const DB_USER = 'db-user';
+    const DB_PASSWORD = 'db-password';
 
     /**
      * @see Console\Command\Command
@@ -31,10 +38,16 @@ class InstallCommand extends Console\Command\Command
     {
         $this->setName('install');
         $this->setDescription('Install Newscoop');
-        $this->addOption(self::ADMIN_PASSWORD, null, InputOption::VALUE_OPTIONAL, 'Admin password?');
-        $this->addOption(self::ADMIN_EMAIL, null, InputOption::VALUE_OPTIONAL, 'Admin email?');
-        $this->addOption(self::SITE_ALIAS, null, InputOption::VALUE_OPTIONAL, 'Site alias?');
-        $this->addOption(self::TEMPLATE_SET, null, InputOption::VALUE_OPTIONAL, 'Template set?');
+        $this->addOption(self::ADMIN_PASSWORD, null, InputOption::VALUE_OPTIONAL, 'Admin password', 'admin');
+        $this->addOption(self::ADMIN_EMAIL, null, InputOption::VALUE_OPTIONAL, 'Admin email', 'admin@localhost');
+        $this->addOption(self::SITE_ALIAS, null, InputOption::VALUE_OPTIONAL, 'Site alias', 'localhost');
+        $this->addOption(self::TEMPLATE_SET, null, InputOption::VALUE_OPTIONAL, 'Template set', 'the_new_custodian');
+        $this->addOption(self::DB_OVERWRITE, null, InputOption::VALUE_OPTIONAL, 'Overwrite database', false);
+        $this->addOption(self::DB_NAME, null, InputOption::VALUE_OPTIONAL, 'Database name', 'newscoop');
+        $this->addOption(self::DB_HOST, null, InputOption::VALUE_OPTIONAL, 'Database host', 'localhost');
+        $this->addOption(self::DB_PORT, null, InputOption::VALUE_OPTIONAL, 'Database port', 3306);
+        $this->addOption(self::DB_USER, null, InputOption::VALUE_OPTIONAL, 'Database user', 'root');
+        $this->addOption(self::DB_PASSWORD, null, InputOption::VALUE_OPTIONAL, 'Database password', '');
     }
 
     /**
@@ -47,11 +60,19 @@ class InstallCommand extends Console\Command\Command
         $config->admin_email = $input->getOption(self::ADMIN_EMAIL) ?: $config->admin_email;
         $config->alias = $input->getOption(self::SITE_ALIAS) ?: $config->alias;
         $config->template_set = $input->getOption(self::TEMPLATE_SET) ?: $config->template_set;
+        $config->overwrite_database = $input->getOption(self::DB_OVERWRITE) ?: $config->overwrite_database;
+        $config->db['dbname'] = $input->getOption(self::DB_NAME) ?: $config->db['dbname'];
+        $config->db['user'] = $input->getOption(self::DB_USER) ?: $config->db['user'];
+        $config->db['password'] = $input->getOption(self::DB_PASSWORD) ?: $config->db['password'];
+        $config->db['host'] = $input->getOption(self::DB_HOST) ?: $config->db['host'];
+        $config->db['port'] = $input->getOption(self::DB_PORT) ?: $config->db['port'];
 
-        $connection = $this->getConnection($config->db);
+        $connection = ConnectionManager::getConnection($config->db, $config->overwrite_database);
         $this->createSchema($connection);
         $this->saveConfig($config);
+
         $this->installTemplates($config->template_set);
+
         $this->setAdmin($config, $connection);
         $this->setAlias($config, $connection);
         $this->gc();
@@ -75,6 +96,7 @@ class InstallCommand extends Console\Command\Command
                     status = :status,
                     is_admin = :is_admin
                 WHERE id = :id";
+
         $connection->executeUpdate(
             $sql,
             array(
@@ -94,28 +116,6 @@ class InstallCommand extends Console\Command\Command
             $sql,
             array('alias' => $config->alias)
         );
-    }
-
-    private function getConnection(array $config)
-    {
-        $noDbConfig = array_merge($config, array('dbname' => null));
-        $connection = \Doctrine\DBAL\DriverManager::getConnection($noDbConfig);
-        $sm = $connection->getSchemaManager();
-
-        if (in_array($config['dbname'], $sm->listDatabases())) {
-            $sm->dropDatabase($config['dbname']);
-        }
-
-        $sm->createDatabase($config['dbname']);
-
-        $connection = \Doctrine\DBAL\DriverManager::getConnection($config);
-
-        $this->em = \Doctrine\ORM\EntityManager::create(
-            $connection,
-            \Zend_Registry::get('container')->get('em')->getConfiguration()
-        );
-
-        return $connection;
     }
 
     private function createSchema($connection)
@@ -153,6 +153,7 @@ class InstallCommand extends Console\Command\Command
 
     private function copyTemplates($set)
     {
+        return;
         $source = APPLICATION_PATH . '/../install/sample_templates/' . $set . '/templates';
         $dest = APPLICATION_PATH . '/../themes/unassigned/' . uniqid($set . '_');
 
@@ -165,8 +166,8 @@ class InstallCommand extends Console\Command\Command
     {
         foreach (array('files', 'images') as $dir) {
             $source = APPLICATION_PATH . '/../install/sample_data/' . $dir;
-            $dest = APPLICATION_PATH . '/' . $dir;
-            $this->copyr($source, $dir);
+            $dest = APPLICATION_PATH . '/../' . $dir;
+            $this->copyr($source, $dest);
         }
     }
 
