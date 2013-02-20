@@ -15,6 +15,7 @@ use Newscoop\Filesystem;
 use Newscoop\Install\InstallConfig;
 use Newscoop\Install\ConfigWriter;
 use Newscoop\Install\ConnectionManager;
+use Newscoop\Install\SchemaLoader;
 
 /**
  * Install Newscoop Command
@@ -42,7 +43,7 @@ class InstallCommand extends Console\Command\Command
         $this->addOption(self::ADMIN_PASSWORD, null, InputOption::VALUE_OPTIONAL, 'Admin password', 'admin');
         $this->addOption(self::ADMIN_EMAIL, null, InputOption::VALUE_OPTIONAL, 'Admin email', 'admin@localhost');
         $this->addOption(self::SITE_ALIAS, null, InputOption::VALUE_OPTIONAL, 'Site alias', 'localhost');
-        $this->addOption(self::TEMPLATE_SET, null, InputOption::VALUE_OPTIONAL, 'Theme set', 'the_new_custodian');
+        $this->addOption(self::TEMPLATE_SET, null, InputOption::VALUE_OPTIONAL, 'Theme set', 'set_the_new_custodian');
         $this->addOption(self::DB_OVERWRITE, null, InputOption::VALUE_OPTIONAL, 'Overwrite database', false);
         $this->addOption(self::DB_NAME, null, InputOption::VALUE_OPTIONAL, 'Database name', 'newscoop');
         $this->addOption(self::DB_HOST, null, InputOption::VALUE_OPTIONAL, 'Database host', 'localhost');
@@ -57,29 +58,32 @@ class InstallCommand extends Console\Command\Command
     protected function execute(Console\Input\InputInterface $input, Console\Output\OutputInterface $output)
     {
         $config = new InstallConfig();
-        $config->admin_password = $input->getOption(self::ADMIN_PASSWORD) ?: $config->admin_password;
-        $config->admin_email = $input->getOption(self::ADMIN_EMAIL) ?: $config->admin_email;
-        $config->alias = $input->getOption(self::SITE_ALIAS) ?: $config->alias;
-        $config->template_set = $input->getOption(self::TEMPLATE_SET) ?: $config->template_set;
-        $config->overwrite_database = $input->getOption(self::DB_OVERWRITE) ?: $config->overwrite_database;
-        $config->db['dbname'] = $input->getOption(self::DB_NAME) ?: $config->db['dbname'];
-        $config->db['user'] = $input->getOption(self::DB_USER) ?: $config->db['user'];
-        $config->db['password'] = $input->getOption(self::DB_PASSWORD) ?: $config->db['password'];
-        $config->db['host'] = $input->getOption(self::DB_HOST) ?: $config->db['host'];
-        $config->db['port'] = $input->getOption(self::DB_PORT) ?: $config->db['port'];
+        $config->admin_password = $input->getOption(self::ADMIN_PASSWORD);
+        $config->admin_email = $input->getOption(self::ADMIN_EMAIL);
+        $config->alias = $input->getOption(self::SITE_ALIAS);
+        $config->template_set = $input->getOption(self::TEMPLATE_SET);
+        $config->overwrite_database = $input->getOption(self::DB_OVERWRITE);
+        $config->db['dbname'] = $input->getOption(self::DB_NAME);
+        $config->db['user'] = $input->getOption(self::DB_USER);
+        $config->db['password'] = $input->getOption(self::DB_PASSWORD);
+        $config->db['host'] = $input->getOption(self::DB_HOST);
+        $config->db['port'] = $input->getOption(self::DB_PORT);
 
-        $connection = ConnectionManager::getConnection($config->db, $config->overwrite_database);
-        $this->createSchema($connection);
-        $this->saveConfig($config);
+        $this->connection = ConnectionManager::getConnection($config->db, $config->overwrite_database);
+        $this->schemaLoader = new SchemaLoader($this->connection);
 
-        $this->installTemplates($config->template_set);
-
-        $this->setAdmin($config, $connection);
-        $this->setAlias($config, $connection);
-        $this->gc();
+        $this->loadSchema();
+        $this->writeConfig($config);
+        $this->loadSampleTemplates($config->template_set);
+        $this->setAdmin($config);
+        $this->setAlias($config);
+        $this->finish();
     }
 
-    private function gc()
+    /**
+     * Finish install
+     */
+    private function finish()
     {
         $upgrade = APPLICATION_PATH . '/../conf/upgrading.php';
         if (file_exists($upgrade)) {
@@ -87,7 +91,12 @@ class InstallCommand extends Console\Command\Command
         }
     }
 
-    private function setAdmin($config, $connection)
+    /**
+     * Set admin user email/password
+     *
+     * @param object $config
+     */
+    private function setAdmin($config)
     {
         $sql = "UPDATE liveuser_users
                 SET Password = SHA1(:password),
@@ -98,7 +107,7 @@ class InstallCommand extends Console\Command\Command
                     is_admin = :is_admin
                 WHERE id = :id";
 
-        $connection->executeUpdate(
+        $this->connection->executeUpdate(
             $sql,
             array(
                 'password' => $config->admin_password,
@@ -110,36 +119,41 @@ class InstallCommand extends Console\Command\Command
         );
     }
 
-    private function setAlias($config, $connection)
+    /**
+     * Set site alias
+     *
+     * @param object $config
+     */
+    private function setAlias($config)
     {
         $sql = "UPDATE Aliases SET Name = :alias LIMIT 1";
-        $connection->executeUpdate(
+        $this->connection->executeUpdate(
             $sql,
             array('alias' => $config->alias)
         );
     }
 
-    private function createSchema($connection)
+    /**
+     * Load core schema
+     */
+    private function loadSchema()
     {
-        $dir = APPLICATION_PATH . '/../install/sql';
-
-        $inputs = array(
-            'campsite_core.sql',
-            'campsite_demo_tables.sql',
-            'campsite_demo_prepare.sql',
-            'campsite_demo_data.sql',
-        );
-
-        foreach ($inputs as $input) {
-            $file = $dir . '/' . $input;
-            $connection->exec(file_get_contents($file));
-        }
+        $this->schemaLoader->load(APPLICATION_PATH . '/../install/sql/campsite_core.sql');
     }
 
-    private function installTemplates($set)
+    /**
+     * Load sample template set
+     *
+     * @param string $set
+     */
+    private function loadSampleTemplates($set)
     {
-        $this->clearAssignedTemplates($set);
-        $this->copyData($set);
+        $this->schemaLoader->load(APPLICATION_PATH . '/../install/sql/campsite_demo_tables.sql');
+        $this->schemaLoader->load(APPLICATION_PATH . '/../install/sql/campsite_demo_prepare.sql');
+        $this->schemaLoader->load(APPLICATION_PATH . '/../install/sql/campsite_demo_data.sql');
+
+        $this->clearAssignedTemplates();
+        $this->copyData();
 
         $resourceId = new \Newscoop\Service\Resource\ResourceId(__CLASS__);
         $themeService = $resourceId->getService(\Newscoop\Service\IThemeManagementService::NAME_1);
@@ -158,6 +172,9 @@ class InstallCommand extends Console\Command\Command
         $this->getHelper('container')->getService('image.rendition')->reloadRenditions();
     }
 
+    /**
+     * Clear assigned templates
+     */
     private function clearAssignedTemplates()
     {
         foreach (glob(APPLICATION_PATH . '/../themes/publication_*') as $path) {
@@ -165,7 +182,10 @@ class InstallCommand extends Console\Command\Command
         }
     }
 
-    private function copyData($set)
+    /**
+     * Copy sample data
+     */
+    private function copyData()
     {
         foreach (array('files', 'images') as $dir) {
             $source = APPLICATION_PATH . '/../install/sample_data/' . $dir;
@@ -174,7 +194,12 @@ class InstallCommand extends Console\Command\Command
         }
     }
 
-    private function saveConfig($config)
+    /**
+     * Write config
+     *
+     * @param object $config
+     */
+    private function writeConfig($config)
     {
         $configWriter = new ConfigWriter();
         $configWriter->write($config, APPLICATION_PATH . '/../conf/database_conf.php');
