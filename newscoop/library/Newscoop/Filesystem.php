@@ -29,14 +29,16 @@ class Filesystem
         );
 
         foreach ($iterator as $item) {
-            if (realpath($dest . '/' . $iterator->getSubPathName())) {
+            $itemDest = $dest . '/' . $iterator->getSubPathName();
+            $realpath = realpath($itemDest);
+            if ($realpath) {
                 continue;
             }
 
             if ($item->isDir()) {
-                mkdir($dest . '/' . $iterator->getSubPathName());
+                mkdir($itemDest);
             } else {
-                copy($item, $dest . '/' . $iterator->getSubPathName());
+                copy($item, $itemDest);
             }
         }
     }
